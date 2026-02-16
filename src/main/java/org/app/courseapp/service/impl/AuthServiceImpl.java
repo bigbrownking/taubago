@@ -7,11 +7,13 @@ import org.app.courseapp.dto.response.JwtResponse;
 import org.app.courseapp.dto.response.PasswordResetResponse;
 import org.app.courseapp.dto.response.SignUpResponse;
 import org.app.courseapp.model.PasswordResetToken;
-import org.app.courseapp.model.User;
+import org.app.courseapp.model.RegistrationAnswer;
+import org.app.courseapp.model.RegistrationQuestion;
+import org.app.courseapp.model.users.Child;
+import org.app.courseapp.model.users.Parent;
+import org.app.courseapp.model.users.User;
 import org.app.courseapp.model.UserRole;
-import org.app.courseapp.repository.PasswordResetTokenRepository;
-import org.app.courseapp.repository.UserRepository;
-import org.app.courseapp.repository.UserRoleRepository;
+import org.app.courseapp.repository.*;
 import org.app.courseapp.security.jwt.JwtTokenUtil;
 import org.app.courseapp.service.AuthService;
 import org.app.courseapp.service.EmailService;
@@ -24,15 +26,21 @@ import java.security.SecureRandom;
 import java.time.LocalDateTime;
 import java.util.Base64;
 import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 @Slf4j
 @Service
 @RequiredArgsConstructor
 public class AuthServiceImpl implements AuthService {
     private final UserRepository userRepository;
+    private final ParentRepository parentRepository;
     private final UserRoleRepository userRoleRepository;
     private final PasswordEncoder passwordEncoder;
     private final AuthenticationManager authenticationManager;
+    private final RegistrationQuestionRepository registrationQuestionRepository;
+    private final RegistrationAnswerRepository registrationAnswerRepository;
     private final JwtTokenUtil jwtTokenUtil;
     private final EmailService emailService;
     private final PasswordResetTokenRepository passwordResetTokenRepository;
@@ -41,42 +49,76 @@ public class AuthServiceImpl implements AuthService {
     @Override
     @Transactional
     public SignUpResponse signup(SignUpRequest request) {
-        log.info("Creating new user: {} {}", request.getName(), request.getSurname());
+        log.info("Creating new parent: {} {}", request.getParentName(), request.getParentSurname());
 
         if (userRepository.existsByEmail(request.getEmail())) {
             log.warn("Email already exists: {}", request.getEmail());
             throw new RuntimeException("Email is already registered");
         }
 
-        UserRole role = userRoleRepository.findByName("ROLE_USER")
-                .orElseThrow(() -> new RuntimeException("Default user role not found"));
+        // Проверяем, что все вопросы существуют
+        List<Long> questionIds = request.getRegistrationAnswers().stream()
+                .map(SignUpRequest.QuestionAnswer::getQuestionId)
+                .toList();
 
-        User user = User.builder()
+        List<RegistrationQuestion> questions = registrationQuestionRepository.findAllById(questionIds);
+        if (questions.size() != questionIds.size()) {
+            throw new RuntimeException("Some questions not found");
+        }
+
+        UserRole parentRole = userRoleRepository.findByName("ROLE_PARENT")
+                .orElseThrow(() -> new RuntimeException("Parent role not found"));
+
+        // Создаем родителя
+        Parent parent = Parent.builder()
                 .email(request.getEmail())
-                .name(request.getName())
-                .surname(request.getSurname())
-                .fathername(request.getFathername())
+                .name(request.getParentName())
+                .surname(request.getParentSurname())
+                .phoneNumber(request.getPhoneNumber())
                 .password(passwordEncoder.encode(request.getPassword()))
-                .pincode(request.getPinCode() != null ? passwordEncoder.encode(request.getPinCode()) : null)
-                .age(request.getAge())
+                .pincode(request.getPinCode() != null ?
+                        passwordEncoder.encode(request.getPinCode()) : null)
                 .active(true)
-                .roles(new HashSet<>(){{add(role);}})
+                .roles(new HashSet<>(){{add(parentRole);}})
+                .children(new HashSet<>())
                 .build();
 
-        User savedUser = userRepository.save(user);
-        log.info("User created successfully with ID: {}", savedUser.getId());
-       /* try {
-            emailService.sendSignUpConfirmationEmail(savedUser.getEmail(), savedUser.getName());
-            log.info("Confirmation email sent to: {}", savedUser.getEmail());
-        } catch (Exception e) {
-            log.error("Failed to send confirmation email, but user was created: {}", e.getMessage());
-        }*/
+        // Добавляем первого ребенка, если указан
+        if (request.getFirstChild() != null) {
+            Child child = Child.builder()
+                    .name(request.getFirstChild().getName())
+                    .surname(request.getFirstChild().getSurname())
+                    .age(request.getFirstChild().getAge())
+                    .diagnosis(request.getFirstChild().getDiagnosis())
+                    .active(true)
+                    .build();
+            parent.addChild(child);
+        }
 
-//        logService.logAction(LogActionType.USER_REGISTER, "User", user.getId(),
-//                "User registered from " + AuthUtils.getIpAddress(), LogStatus.SUCCESS);
-        return SignUpResponse.fromEntity(savedUser);
+        Parent savedParent = parentRepository.save(parent);
+
+        // Сохраняем ответы на вопросы
+        Map<Long, RegistrationQuestion> questionMap = questions.stream()
+                .collect(Collectors.toMap(RegistrationQuestion::getId, q -> q));
+
+        List<RegistrationAnswer> answers = request.getRegistrationAnswers().stream()
+                .map(qa -> RegistrationAnswer.builder()
+                        .parent(savedParent)
+                        .question(questionMap.get(qa.getQuestionId()))
+                        .answer(qa.getAnswer())
+                        .build())
+                .toList();
+
+        registrationAnswerRepository.saveAll(answers);
+
+        // Подсчитываем статистику ответов
+        long positiveAnswers = answers.stream().filter(RegistrationAnswer::getAnswer).count();
+
+        log.info("Parent created successfully with ID: {}. Answers: {}/{} positive",
+                savedParent.getId(), positiveAnswers, answers.size());
+
+        return SignUpResponse.fromEntity(savedParent, answers.size(), (int) positiveAnswers);
     }
-
     @Override
     public JwtResponse login(LoginRequest request) {
         log.info("User attempts to login: {}", request.getEmail());
@@ -86,6 +128,7 @@ public class AuthServiceImpl implements AuthService {
 
         boolean authenticated = false;
         String authType = null;
+
         if (request.getPassword() != null && !request.getPassword().isBlank()) {
             if (passwordEncoder.matches(request.getPassword(), user.getPassword())) {
                 authenticated = true;
@@ -148,6 +191,7 @@ public class AuthServiceImpl implements AuthService {
                 .authType(authType)
                 .build();
     }
+
     @Override
     @Transactional
     public PasswordResetResponse requestPasswordReset(PasswordResetRequest request) {
@@ -174,22 +218,16 @@ public class AuthServiceImpl implements AuthService {
 
         passwordResetTokenRepository.save(resetToken);
 
+        // Получаем имя пользователя в зависимости от типа
+        String userName = getUserName(user);
+
         try {
-            emailService.sendPasswordResetEmail(user.getEmail(), user.getName(), token);
+            emailService.sendPasswordResetEmail(user.getEmail(), userName, token);
             log.info("Password reset email sent to: {}", user.getEmail());
         } catch (Exception e) {
             log.error("Failed to send password reset email: {}", e.getMessage());
             throw new RuntimeException("Failed to send password reset email");
         }
-
-
-//        logService.logAction(
-//                LogActionType.PASSWORD_RESET_REQUEST,
-//                "User",
-//                user.getId(),
-//                "Password reset requested from " + AuthUtils.getIpAddress(),
-//                LogStatus.SUCCESS
-//        );
 
         return PasswordResetResponse.builder()
                 .message("Password reset email sent successfully. Please check your email.")
@@ -227,6 +265,8 @@ public class AuthServiceImpl implements AuthService {
 
         log.info("Password successfully reset for user: {}", user.getEmail());
 
+        String userName = getUserName(user);
+
         try {
             emailService.sendEmail(
                     user.getEmail(),
@@ -239,19 +279,11 @@ public class AuthServiceImpl implements AuthService {
                             If you didn't make this change, please contact support immediately.
 
                             Best regards,
-                            DiaBalance Team""", user.getName())
+                            DiaBalance Team""", userName)
             );
         } catch (Exception e) {
             log.error("Failed to send password change confirmation email: {}", e.getMessage());
         }
-
-//        logService.logAction(
-//                LogActionType.PASSWORD_RESET_COMPLETE,
-//                "User",
-//                user.getId(),
-//                "Password reset completed from " + AuthUtils.getIpAddress(),
-//                LogStatus.SUCCESS
-//        );
 
         return PasswordResetResponse.builder()
                 .message("Password has been reset successfully. You can now login with your new password.")
@@ -277,4 +309,14 @@ public class AuthServiceImpl implements AuthService {
         return !resetToken.isUsed();
     }
 
+    /**
+     * Вспомогательный метод для получения имени пользователя в зависимости от его типа
+     */
+    private String getUserName(User user) {
+        if (user instanceof Parent) {
+            return ((Parent) user).getName();
+        }
+        // Можно добавить другие типы
+        return user.getEmail(); // fallback
+    }
 }

@@ -1,29 +1,35 @@
-package org.app.courseapp.dto;
+package org.app.courseapp.dto.response;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import org.app.courseapp.model.CourseMonth;
-import org.app.courseapp.model.Lesson;
 
 import java.time.LocalDateTime;
-import java.util.List;
 
+
+ * Updated CourseDto with rating information
+ */
 @Data
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
 public class CourseDto {
+
     private Long id;
     private String title;
     private String description;
-    private CourseMonth month;
-    private List<Lesson> lessons;
-    private String monthDisplayName;
+    private String month;
     private Integer durationDays;
-    private String createdByName;
+    private String createdByEmail;
     private LocalDateTime createdAt;
+    private LocalDateTime updatedAt;
     private Boolean isEnrolled;
-    private Integer enrolledCount;
+
+    // NEW: Rating fields
+    private Double averageRating;
+    private Long totalRatings;
+    private String formattedRating;
+    private Boolean hasUserRated;
+    private Boolean hasUserReviewed;
 }

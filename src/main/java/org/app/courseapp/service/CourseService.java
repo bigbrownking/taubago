@@ -1,8 +1,7 @@
 package org.app.courseapp.service;
 
-import org.app.courseapp.dto.CourseDto;
+import org.app.courseapp.dto.response.CourseDto;
 import org.app.courseapp.dto.request.CreateCourseRequest;
-import org.app.courseapp.model.Course;
 
 import java.util.List;
 

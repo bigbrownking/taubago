@@ -2,7 +2,7 @@ package org.app.courseapp.security;
 
 import lombok.AllArgsConstructor;
 import lombok.Getter;
-import org.app.courseapp.model.User;
+import org.app.courseapp.model.users.User;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;

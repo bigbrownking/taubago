@@ -6,19 +6,23 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 import org.app.courseapp.model.users.User;
 import org.springframework.data.annotation.CreatedDate;
-import org.springframework.data.annotation.LastModifiedDate;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
 import java.time.LocalDateTime;
 
+/**
+ * Entity representing a "like" or "helpful" vote on a review.
+ * Used to track which users found a review helpful.
+ */
 @Entity
-@Table(name = "video_progress",
-        uniqueConstraints = @UniqueConstraint(columnNames = {"user_id", "video_id"}))
+@Table(name = "review_likes",
+        uniqueConstraints = @UniqueConstraint(columnNames = {"user_id", "review_id"}))
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
 @EntityListeners(AuditingEntityListener.class)
-public class VideoProgress {
+public class ReviewLike {
+
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
@@ -28,23 +32,10 @@ public class VideoProgress {
     private User user;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "video_id", nullable = false)
-    private Video video;
-
-    @Column(name = "watched_seconds")
-    private Long watchedSeconds = 0L;
-
-    @Column(name = "is_completed")
-    private Boolean isCompleted = false;
+    @JoinColumn(name = "review_id", nullable = false)
+    private CourseReview review;
 
     @CreatedDate
-    @Column(name = "started_at", updatable = false)
-    private LocalDateTime startedAt;
-
-    @LastModifiedDate
-    @Column(name = "last_watched_at")
-    private LocalDateTime lastWatchedAt;
-
-    @Column(name = "completed_at")
-    private LocalDateTime completedAt;
+    @Column(name = "created_at", updatable = false)
+    private LocalDateTime createdAt;
 }

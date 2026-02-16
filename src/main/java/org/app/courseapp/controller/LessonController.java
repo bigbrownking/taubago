@@ -1,7 +1,7 @@
 package org.app.courseapp.controller;
 
 import lombok.RequiredArgsConstructor;
-import org.app.courseapp.dto.LessonDto;
+import org.app.courseapp.dto.response.LessonDto;
 import org.app.courseapp.service.LessonService;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;

@@ -1,7 +1,7 @@
 package org.app.courseapp.security;
 
 import lombok.RequiredArgsConstructor;
-import org.app.courseapp.model.User;
+import org.app.courseapp.model.users.User;
 import org.app.courseapp.repository.UserRepository;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;

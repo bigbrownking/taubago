@@ -1,6 +1,6 @@
 package org.app.courseapp.service;
 
-import org.app.courseapp.dto.LessonDto;
+import org.app.courseapp.dto.response.LessonDto;
 
 import java.util.List;
 

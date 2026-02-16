@@ -1,18 +1,18 @@
 package org.app.courseapp.util;
 
 import lombok.RequiredArgsConstructor;
-import org.app.courseapp.dto.CourseDto;
-import org.app.courseapp.dto.LessonDto;
-import org.app.courseapp.dto.VideoDto;
-import org.app.courseapp.model.Course;
-import org.app.courseapp.model.Lesson;
-import org.app.courseapp.model.Video;
-import org.app.courseapp.model.VideoProgress;
+import org.app.courseapp.dto.response.CourseDto;
+import org.app.courseapp.dto.response.LessonDto;
+import org.app.courseapp.dto.response.RegistrationQuestionDto;
+import org.app.courseapp.dto.response.VideoDto;
+import org.app.courseapp.model.*;
 import org.app.courseapp.repository.CourseEnrollmentRepository;
+import org.app.courseapp.repository.CourseReviewRepository;
 import org.app.courseapp.repository.VideoProgressRepository;
 import org.app.courseapp.service.impl.MinioService;
 import org.springframework.stereotype.Component;
 
+import java.util.ArrayList;
 import java.util.List;
 
 @Component
@@ -22,26 +22,56 @@ public class Mapper {
     private final MinioService minioService;
     private final VideoProgressRepository videoProgressRepository;
     private final CourseEnrollmentRepository enrollmentRepository;
+    private final CourseRatingRepository ratingRepository;
+    private final CourseReviewRepository reviewRepository;
 
     public CourseDto convertCourseToDto(Course course, Long userId) {
-        boolean isEnrolled = userId != null &&
-                enrollmentRepository.existsByUserIdAndCourseId(userId, course.getId());
+        // Check enrollment status
+        Boolean isEnrolled = false;
+        if (userId != null) {
+            isEnrolled = enrollmentRepository.existsByUserIdAndCourseId(userId, course.getId());
+        }
 
-        int enrolledCount = enrollmentRepository.findByCourseId(course.getId()).size();
+        // Get rating information
+        Double averageRating = reviewRepository.findAverageRatingByCourseId(course.getId());
+        Long totalRatings = reviewRepository.countByCourseId(course.getId());
+
+        // If no reviews, check simple ratings
+        if (averageRating == null) {
+            averageRating = ratingRepository.findAverageRatingByCourseId(course.getId());
+            totalRatings = ratingRepository.countByCourseId(course.getId());
+        }
+
+        if (averageRating == null) {
+            averageRating = 0.0;
+            totalRatings = 0L;
+        }
+
+        // Check if user has rated/reviewed
+        Boolean hasUserRated = false;
+        Boolean hasUserReviewed = false;
+        if (userId != null) {
+            hasUserRated = ratingRepository.existsByUserIdAndCourseId(userId, course.getId());
+            hasUserReviewed = reviewRepository.existsByUserIdAndCourseId(userId, course.getId());
+        }
+
+        String formattedRating = String.format("%.1f", averageRating);
 
         return CourseDto.builder()
                 .id(course.getId())
                 .title(course.getTitle())
                 .description(course.getDescription())
-                .month(course.getMonth())
-                .lessons(course.getLessons())
-                .monthDisplayName(course.getMonth() != null ? course.getMonth().getDisplayName() : null)
+                .month(course.getMonth() != null ? course.getMonth().getDisplayName() : null)
                 .durationDays(course.getDurationDays())
-                .createdByName(course.getCreatedBy() != null ?
-                        course.getCreatedBy().getName() + " " + course.getCreatedBy().getSurname() : null)
+                .createdByEmail(course.getCreatedBy() != null ? course.getCreatedBy().getEmail() : null)
                 .createdAt(course.getCreatedAt())
+                .updatedAt(course.getUpdatedAt())
                 .isEnrolled(isEnrolled)
-                .enrolledCount(enrolledCount)
+                .averageRating(averageRating)
+                .totalRatings(totalRatings)
+                .formattedRating(formattedRating)
+                .hasUserRated(hasUserRated)
+                .hasUserReviewed(hasUserReviewed)
                 .build();
     }
     public LessonDto convertLessonToDto(Lesson lesson, Long userId) {
@@ -77,5 +107,21 @@ public class Mapper {
                 .isCompleted(progress != null && progress.getIsCompleted())
                 .watchedSeconds(progress != null ? progress.getWatchedSeconds() : 0L)
                 .build();
+    }
+
+    public RegistrationQuestionDto convertRegistrationQuestionToDto(RegistrationQuestion registrationQuestion){
+        return RegistrationQuestionDto.builder()
+                .id(registrationQuestion.getId())
+                .topic(registrationQuestion.getTopic())
+                .question(registrationQuestion.getQuestion())
+                .build();
+    }
+
+    public List<RegistrationQuestionDto> convertRegistrationQuestionsToDto(List<RegistrationQuestion> registrationQuestions){
+        List<RegistrationQuestionDto> result = new ArrayList<>();
+        for(RegistrationQuestion registrationQuestion : registrationQuestions){
+            result.add(convertRegistrationQuestionToDto(registrationQuestion));
+        }
+        return result;
     }
 }

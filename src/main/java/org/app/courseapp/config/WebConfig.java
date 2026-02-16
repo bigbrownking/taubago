@@ -60,6 +60,7 @@ public class WebConfig {
                         ).permitAll()
                         .requestMatchers("/auth/**").permitAll()
                         .requestMatchers("/error/**").permitAll()
+                        .requestMatchers("/dict/**").permitAll()
                         .requestMatchers("/admin/**").hasRole("ADMIN")
                         .anyRequest().authenticated()
                 )

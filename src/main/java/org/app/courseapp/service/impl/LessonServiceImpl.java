@@ -1,9 +1,9 @@
 package org.app.courseapp.service.impl;
 
 import lombok.RequiredArgsConstructor;
-import org.app.courseapp.dto.LessonDto;
+import org.app.courseapp.dto.response.LessonDto;
 import org.app.courseapp.model.Lesson;
-import org.app.courseapp.model.User;
+import org.app.courseapp.model.users.User;
 import org.app.courseapp.repository.LessonRepository;
 import org.app.courseapp.service.LessonService;
 import org.app.courseapp.service.UserService;

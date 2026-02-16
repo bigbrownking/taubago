@@ -1,4 +1,4 @@
-package org.app.courseapp.dto;
+package org.app.courseapp.dto.response;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;

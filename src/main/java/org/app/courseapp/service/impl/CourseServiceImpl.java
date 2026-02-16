@@ -2,12 +2,13 @@ package org.app.courseapp.service.impl;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.app.courseapp.dto.CourseDto;
+import org.app.courseapp.dto.response.CourseDto;
 import org.app.courseapp.dto.request.CreateCourseRequest;
 import org.app.courseapp.model.Course;
 import org.app.courseapp.model.CourseEnrollment;
 import org.app.courseapp.model.Lesson;
-import org.app.courseapp.model.User;
+import org.app.courseapp.model.users.Parent;
+import org.app.courseapp.model.users.User;
 import org.app.courseapp.repository.CourseEnrollmentRepository;
 import org.app.courseapp.repository.CourseRepository;
 import org.app.courseapp.repository.LessonRepository;
@@ -78,7 +79,7 @@ public class CourseServiceImpl implements CourseService {
         User currentUser = userService.getCurrentUser();
 
         if (!currentUser.hasRole("ROLE_ADMIN")) {
-            throw new RuntimeException("Access denied: Only admins can create courses");
+            throw new RuntimeException("Access denied: Only administrators can create courses");
         }
 
         // Создаем курс
@@ -120,6 +121,10 @@ public class CourseServiceImpl implements CourseService {
     @Transactional
     public void enrollInCourse(Long courseId) {
         User currentUser = userService.getCurrentUser();
+
+        if (!(currentUser instanceof Parent)) {
+            throw new RuntimeException("Only parents can enroll in courses");
+        }
         Course course = courseRepository.findById(courseId)
                 .orElseThrow(() -> new RuntimeException("Course not found"));
 

@@ -1,9 +1,11 @@
-package org.app.courseapp.model;
+package org.app.courseapp.model.users;
 
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotBlank;
 import lombok.*;
+import lombok.experimental.SuperBuilder;
 import lombok.extern.slf4j.Slf4j;
+import org.app.courseapp.model.UserRole;
 import org.springframework.data.annotation.CreatedDate;
 import org.springframework.data.annotation.LastModifiedDate;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
@@ -12,47 +14,28 @@ import java.time.LocalDateTime;
 import java.util.HashSet;
 import java.util.Set;
 
-@Slf4j
+@SuperBuilder
+@Entity
+@Table(name = "users")
+@Inheritance(strategy = InheritanceType.JOINED)
+@EntityListeners(AuditingEntityListener.class)
 @Getter
 @Setter
-@Entity
-@Builder
-@AllArgsConstructor
 @NoArgsConstructor
-@Table(name = "users")
-@EntityListeners(AuditingEntityListener.class)
+@AllArgsConstructor
 public class User {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(unique = true)
-    private String username;
-
-    @Column(name = "name")
-    private String name;
-
-    @Column(name = "surname")
-    private String surname;
-
-    @Column(name = "fathername")
-    private String fathername;
-
-    @Column(unique = true)
+    @Column(unique = true, nullable = false)
     private String email;
-
-    @Column(name = "age")
-    private int age;
 
     @NotBlank
     private String password;
 
     @Column(name = "pincode")
     private String pincode;
-
-    @Column(name = "profile_picture_url", columnDefinition = "TEXT")
-    private String profilePictureUrl;
-
 
     @Column(nullable = false)
     @Builder.Default
@@ -76,12 +59,6 @@ public class User {
 
     public void addRole(UserRole role) {
         this.roles.add(role);
-        log.debug("Added role {} to user {}", role.getName(), username);
-    }
-
-    public void removeRole(UserRole role) {
-        this.roles.remove(role);
-        log.debug("Removed role {} from user {}", role.getName(), username);
     }
 
     public boolean hasRole(String roleName) {

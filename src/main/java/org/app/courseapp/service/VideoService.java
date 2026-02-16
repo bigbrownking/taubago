@@ -1,6 +1,6 @@
 package org.app.courseapp.service;
 
-import org.app.courseapp.dto.VideoDto;
+import org.app.courseapp.dto.response.VideoDto;
 import org.app.courseapp.dto.response.UploadUrlResponse;
 import org.springframework.web.multipart.MultipartFile;
 

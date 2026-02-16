@@ -1,12 +1,16 @@
 package org.app.courseapp.controller;
 
+import io.swagger.v3.oas.annotations.Operation;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
-import org.app.courseapp.dto.CourseDto;
-import org.app.courseapp.dto.VideoDto;
+import lombok.extern.slf4j.Slf4j;
+import org.app.courseapp.dto.response.CourseDto;
+import org.app.courseapp.dto.response.VideoDto;
 import org.app.courseapp.dto.request.CreateCourseRequest;
+import org.app.courseapp.dto.response.userProfile.BaseUserProfileDto;
 import org.app.courseapp.model.CourseMonth;
 import org.app.courseapp.service.CourseService;
+import org.app.courseapp.service.UserService;
 import org.app.courseapp.service.VideoService;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
@@ -17,12 +21,21 @@ import java.io.IOException;
 import java.util.Arrays;
 import java.util.List;
 
+@Slf4j
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/admin")
 public class AdminController {
+    private final UserService userService;
     private final CourseService courseService;
     private final VideoService videoService;
+
+    @GetMapping("/profile/{email}")
+    @Operation(summary = "Get user profile by email", description = "Get any user's profile (admin only)")
+    public ResponseEntity<BaseUserProfileDto> getUserProfile(@PathVariable String email) {
+        log.info("Fetching profile for user: {}", email);
+        return ResponseEntity.ok(userService.getUserProfile(email));
+    }
 
     @GetMapping("/months")
     public ResponseEntity<List<CourseMonth>> getAvailableMonths() {
