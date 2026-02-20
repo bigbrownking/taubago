@@ -30,12 +30,11 @@ public class Course {
     @Column(length = 2000)
     private String description;
 
-    @Enumerated(EnumType.STRING)
-    @Column(name = "month")
-    private CourseMonth month;
-
     @Column(name = "duration_days")
     private Integer durationDays;
+
+    @Column(name = "course_order", unique = true)
+    private Integer order;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "created_by_user_id")
@@ -57,14 +56,6 @@ public class Course {
 
     @OneToMany(mappedBy = "course", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<CourseReview> reviews = new ArrayList<>();
-
-    @PrePersist
-    @PreUpdate
-    private void calculateDuration() {
-        if (month != null) {
-            this.durationDays = month.getDays();
-        }
-    }
 
     public void addLesson(Lesson lesson){
         lessons.add(lesson);

@@ -13,4 +13,8 @@ public interface CourseService {
     void enrollInCourse(Long courseId);
     void unenrollFromCourse(Long courseId);
     boolean isEnrolled(Long courseId);
+    List<CourseDto> getMyActiveCourses();
+    List<CourseDto> getMyCompletedCourses();
+    void completeCourse(Long courseId);
+
 }

@@ -41,4 +41,20 @@ public class CourseController {
         courseService.unenrollFromCourse(courseId);
         return ResponseEntity.ok().build();
     }
+
+    @GetMapping("/courses/my/active")
+    public ResponseEntity<List<CourseDto>> getMyActiveCourses() {
+        return ResponseEntity.ok(courseService.getMyActiveCourses());
+    }
+
+    @GetMapping("/courses/my/completed")
+    public ResponseEntity<List<CourseDto>> getMyCompletedCourses() {
+        return ResponseEntity.ok(courseService.getMyCompletedCourses());
+    }
+
+    @PostMapping("/courses/{courseId}/complete")
+    public ResponseEntity<Void> completeCourse(@PathVariable Long courseId) {
+        courseService.completeCourse(courseId);
+        return ResponseEntity.ok().build();
+    }
 }

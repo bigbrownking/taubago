@@ -32,6 +32,10 @@ public class Video {
     @Column(nullable = false)
     private VideoType type;
 
+    @Enumerated(EnumType.STRING)
+    @Column(name = "category")
+    private VideoCategory category;
+
     @Column(name = "object_key", nullable = false)
     private String objectKey;
 

@@ -8,6 +8,7 @@ import lombok.RequiredArgsConstructor;
 import org.app.courseapp.dto.response.UploadUrlResponse;
 import org.app.courseapp.dto.response.VideoDto;
 import org.app.courseapp.model.Video;
+import org.app.courseapp.model.VideoCategory;
 import org.app.courseapp.repository.VideoRepository;
 import org.app.courseapp.service.VideoService;
 import org.springframework.http.HttpHeaders;
@@ -15,7 +16,9 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
+import java.io.IOException;
 import java.io.InputStream;
 import java.util.List;
 import java.util.Map;
@@ -123,5 +126,28 @@ public class VideoController {
         headers.setContentLength(contentLength);
 
         return new ResponseEntity<>(data, headers, HttpStatus.PARTIAL_CONTENT);
+    }
+
+    @PostMapping("/lesson/{lessonId}/upload")
+    public ResponseEntity<VideoDto> uploadLessonVideo(
+            @PathVariable Long lessonId,
+            @RequestParam("file") MultipartFile file,
+            @RequestParam("title") String title,
+            @RequestParam("category") VideoCategory category
+    ) throws IOException {
+        return ResponseEntity.ok(videoService.uploadLessonVideo(lessonId, file, title, category));
+    }
+
+    @GetMapping("/lesson/{lessonId}/category/{category}")
+    public ResponseEntity<List<VideoDto>> getVideosByCategory(
+            @PathVariable Long lessonId,
+            @PathVariable VideoCategory category
+    ) {
+        return ResponseEntity.ok(videoService.getLessonVideosByCategory(lessonId, category));
+    }
+
+    @GetMapping("/lesson/{lessonId}/homework/my")
+    public ResponseEntity<List<VideoDto>> getMyHomework(@PathVariable Long lessonId) {
+        return ResponseEntity.ok(videoService.getMyHomeworkVideos(lessonId));
     }
 }

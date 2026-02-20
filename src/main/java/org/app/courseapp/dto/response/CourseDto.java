@@ -16,7 +16,6 @@ public class CourseDto {
     private Long id;
     private String title;
     private String description;
-    private String month;
     private Integer durationDays;
     private String createdByEmail;
     private LocalDateTime createdAt;
@@ -29,4 +28,8 @@ public class CourseDto {
     private String formattedRating;
     private Boolean hasUserRated;
     private Boolean hasUserReviewed;
+
+    private int order;
+    private boolean available;
+    private String unavailableReason;
 }

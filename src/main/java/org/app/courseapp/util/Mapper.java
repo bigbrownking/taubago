@@ -7,6 +7,7 @@ import org.app.courseapp.dto.response.RegistrationQuestionDto;
 import org.app.courseapp.dto.response.VideoDto;
 import org.app.courseapp.model.*;
 import org.app.courseapp.repository.CourseEnrollmentRepository;
+import org.app.courseapp.repository.CourseRepository;
 import org.app.courseapp.repository.CourseReviewRepository;
 import org.app.courseapp.repository.VideoProgressRepository;
 import org.app.courseapp.service.impl.MinioService;
@@ -14,6 +15,7 @@ import org.springframework.stereotype.Component;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 
 @Component
 @RequiredArgsConstructor
@@ -23,44 +25,63 @@ public class Mapper {
     private final VideoProgressRepository videoProgressRepository;
     private final CourseEnrollmentRepository enrollmentRepository;
     private final CourseReviewRepository reviewRepository;
+    private final CourseRepository courseRepository;
 
     public CourseDto convertCourseToDto(Course course, Long userId) {
-        // Check enrollment status
-        Boolean isEnrolled = false;
+        boolean isEnrolled = false;
+        boolean available = true;
+        String unavailableReason = null;
+
         if (userId != null) {
             isEnrolled = enrollmentRepository.existsByUserIdAndCourseId(userId, course.getId());
+
+            List<CourseEnrollment> userEnrollments = enrollmentRepository.findByUserId(userId);
+
+            boolean hasActiveCourse = userEnrollments.stream()
+                    .anyMatch(e -> !Boolean.TRUE.equals(e.getCompleted()));
+
+            boolean previousCompleted = true;
+            if (course.getOrder() != null && course.getOrder() > 1) {
+                Optional<Course> previousCourse = courseRepository.findByOrder(course.getOrder() - 1);
+                if (previousCourse.isPresent()) {
+                    previousCompleted = userEnrollments.stream()
+                            .filter(e -> e.getCourse().getId().equals(previousCourse.get().getId()))
+                            .findFirst()
+                            .map(e -> Boolean.TRUE.equals(e.getCompleted()))
+                            .orElse(false);
+                }
+            }
+
+            if (isEnrolled) {
+                available = true;
+            } else if (hasActiveCourse) {
+                available = false;
+                unavailableReason = "Сначала завершите текущий курс";
+            } else if (!previousCompleted) {
+                available = false;
+                unavailableReason = "Сначала завершите предыдущий курс";
+            }
         }
 
-        // Get rating information
         Double averageRating = reviewRepository.findAverageRatingByCourseId(course.getId());
         Long totalRatings = reviewRepository.countByCourseId(course.getId());
-
-        // If no reviews, check simple ratings
-        if (averageRating == null) {
-            averageRating = reviewRepository.findAverageRatingByCourseId(course.getId());
-            totalRatings = reviewRepository.countByCourseId(course.getId());
-        }
 
         if (averageRating == null) {
             averageRating = 0.0;
             totalRatings = 0L;
         }
 
-        // Check if user has rated/reviewed
         boolean hasUserRated = false;
         boolean hasUserReviewed = false;
         if (userId != null) {
             hasUserRated = reviewRepository.existsByUserIdAndCourseId(userId, course.getId());
-            hasUserReviewed = reviewRepository.existsByUserIdAndCourseId(userId, course.getId());
+            hasUserReviewed = hasUserRated;
         }
-
-        String formattedRating = String.format("%.1f", averageRating);
 
         return CourseDto.builder()
                 .id(course.getId())
                 .title(course.getTitle())
                 .description(course.getDescription())
-                .month(course.getMonth() != null ? course.getMonth().getDisplayName() : null)
                 .durationDays(course.getDurationDays())
                 .createdByEmail(course.getCreatedBy() != null ? course.getCreatedBy().getEmail() : null)
                 .createdAt(course.getCreatedAt())
@@ -68,9 +89,12 @@ public class Mapper {
                 .isEnrolled(isEnrolled)
                 .averageRating(averageRating)
                 .totalRatings(totalRatings)
-                .formattedRating(formattedRating)
+                .formattedRating(String.format("%.1f", averageRating))
                 .hasUserRated(hasUserRated)
                 .hasUserReviewed(hasUserReviewed)
+                .available(available)
+                .order(course.getOrder())
+                .unavailableReason(unavailableReason)
                 .build();
     }
     public LessonDto convertLessonToDto(Lesson lesson, Long userId) {
