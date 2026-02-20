@@ -7,9 +7,6 @@ import lombok.NoArgsConstructor;
 
 import java.time.LocalDateTime;
 
-
- * Updated CourseDto with rating information
- */
 @Data
 @Builder
 @NoArgsConstructor

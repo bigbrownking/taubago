@@ -22,7 +22,6 @@ public class Mapper {
     private final MinioService minioService;
     private final VideoProgressRepository videoProgressRepository;
     private final CourseEnrollmentRepository enrollmentRepository;
-    private final CourseRatingRepository ratingRepository;
     private final CourseReviewRepository reviewRepository;
 
     public CourseDto convertCourseToDto(Course course, Long userId) {
@@ -38,8 +37,8 @@ public class Mapper {
 
         // If no reviews, check simple ratings
         if (averageRating == null) {
-            averageRating = ratingRepository.findAverageRatingByCourseId(course.getId());
-            totalRatings = ratingRepository.countByCourseId(course.getId());
+            averageRating = reviewRepository.findAverageRatingByCourseId(course.getId());
+            totalRatings = reviewRepository.countByCourseId(course.getId());
         }
 
         if (averageRating == null) {
@@ -48,10 +47,10 @@ public class Mapper {
         }
 
         // Check if user has rated/reviewed
-        Boolean hasUserRated = false;
-        Boolean hasUserReviewed = false;
+        boolean hasUserRated = false;
+        boolean hasUserReviewed = false;
         if (userId != null) {
-            hasUserRated = ratingRepository.existsByUserIdAndCourseId(userId, course.getId());
+            hasUserRated = reviewRepository.existsByUserIdAndCourseId(userId, course.getId());
             hasUserReviewed = reviewRepository.existsByUserIdAndCourseId(userId, course.getId());
         }
 
