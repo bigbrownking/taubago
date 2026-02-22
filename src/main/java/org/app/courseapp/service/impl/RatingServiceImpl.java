@@ -218,7 +218,6 @@ public class RatingServiceImpl implements RatingService {
                     .formattedRating(String.format("%.1f", averageRating))
                     .reviewCount(reviewCount)
                     .colorCode(colors[i % colors.length])
-                    .month(course.getMonth() != null ? course.getMonth().getDisplayName() : null)
                     .build();
 
             result.add(dto);

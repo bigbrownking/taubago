@@ -28,6 +28,7 @@ public class VideoServiceImpl implements VideoService {
     private final VideoRepository videoRepository;
     private final LessonRepository lessonRepository;
     private final VideoProgressRepository videoProgressRepository;
+    private final VideoCategoryRepository categoryRepository;
     private final MinioService minioService;
     private final MinioProperties minioProperties;
     private final UserService userService;
@@ -41,17 +42,6 @@ public class VideoServiceImpl implements VideoService {
         return videos.stream()
                 .map(video -> mapper.convertVideoToDto(video, currentUser.getId()))
                 .toList();
-    }
-    @Override
-    public UploadUrlResponse getHomeworkUploadUrl(Long lessonId) {
-        Lesson lesson = lessonRepository.findById(lessonId)
-                .orElseThrow(() -> new RuntimeException("Lesson not found"));
-
-        User currentUser = userService.getCurrentUser();
-        String objectKey = generateHomeworkObjectKey(lesson, currentUser.getId());
-        String uploadUrl = minioService.getPresignedUploadUrl(objectKey, 15);
-
-        return new UploadUrlResponse(uploadUrl, objectKey, "video/mp4");
     }
     @Override
     @Transactional
@@ -120,18 +110,6 @@ public class VideoServiceImpl implements VideoService {
 
     @Override
     @Transactional(readOnly = true)
-    public List<VideoDto> getLessonVideosByCategory(Long lessonId, VideoCategory category) {
-        User currentUser = userService.getCurrentUser();
-        List<Video> videos = videoRepository.findByLessonIdAndTypeAndCategory(
-                lessonId, VideoType.LESSON, category
-        );
-        return videos.stream()
-                .map(video -> mapper.convertVideoToDto(video, currentUser.getId()))
-                .toList();
-    }
-
-    @Override
-    @Transactional(readOnly = true)
     public List<VideoDto> getMyHomeworkVideos(Long lessonId) {
         User currentUser = userService.getCurrentUser();
         return videoRepository.findByLessonIdAndUploadedById(lessonId, currentUser.getId())
@@ -146,7 +124,7 @@ public class VideoServiceImpl implements VideoService {
             Long lessonId,
             MultipartFile file,
             String title,
-            VideoCategory category
+            Long categoryId
     ) throws IOException {
         Lesson lesson = lessonRepository.findById(lessonId)
                 .orElseThrow(() -> new RuntimeException("Lesson not found"));
@@ -157,77 +135,45 @@ public class VideoServiceImpl implements VideoService {
             throw new RuntimeException("Only admins can upload lesson videos");
         }
 
-        if (category == null) {
-            throw new RuntimeException("Category is required for lesson videos");
-        }
+        VideoCategory category = categoryRepository.findById(categoryId)
+                .orElseThrow(() -> new RuntimeException("Category not found"));
 
-        String objectKey = generateObjectKey(lesson, VideoType.LESSON, category, file.getOriginalFilename());
+        String objectKey = generateObjectKey(lesson, VideoType.LESSON, category.getName(), file.getOriginalFilename());
 
-        minioService.uploadFile(
-                objectKey,
-                file.getInputStream(),
-                file.getContentType(),
-                file.getSize()
-        );
+        minioService.uploadFile(objectKey, file.getInputStream(), file.getContentType(), file.getSize());
 
-        Video video = videoRepository.save(
-                Video.builder()
-                        .title(title)
-                        .type(VideoType.LESSON)
-                        .category(category)
-                        .objectKey(objectKey)
-                        .bucketName(minioProperties.getBucket())
-                        .fileSizeBytes(file.getSize())
-                        .contentType(file.getContentType())
-                        .lesson(lesson)
-                        .uploadedBy(currentUser)
-                        .build()
-        );
-
-        log.info("Admin {} uploaded {} video for lesson {}",
-                currentUser.getEmail(), category, lessonId);
+        Video video = videoRepository.save(Video.builder()
+                .title(title)
+                .type(VideoType.LESSON)
+                .category(category)
+                .objectKey(objectKey)
+                .bucketName(minioProperties.getBucket())
+                .fileSizeBytes(file.getSize())
+                .contentType(file.getContentType())
+                .lesson(lesson)
+                .uploadedBy(currentUser)
+                .build());
 
         return mapper.convertVideoToDto(video, currentUser.getId());
     }
 
     @Override
-    @Transactional
-    public VideoDto confirmHomeworkUpload(Long lessonId, String objectKey, String title, Long fileSize) {
-        Lesson lesson = lessonRepository.findById(lessonId)
-                .orElseThrow(() -> new RuntimeException("Lesson not found"));
-
+    @Transactional(readOnly = true)
+    public List<VideoDto> getLessonVideosByCategory(Long lessonId, Long categoryId) {
         User currentUser = userService.getCurrentUser();
-
-        Video video = Video.builder()
-                .title(title)
-                .type(VideoType.HOMEWORK)
-                .category(null)
-                .objectKey(objectKey)
-                .bucketName(minioProperties.getBucket())
-                .fileSizeBytes(fileSize)
-                .contentType("video/mp4")
-                .lesson(lesson)
-                .uploadedBy(currentUser)
-                .build();
-
-        video = videoRepository.save(video);
-
-        log.info("User {} uploaded homework for lesson {}", currentUser.getEmail(), lessonId);
-
-        return mapper.convertVideoToDto(video, currentUser.getId());
+        VideoCategory category = categoryRepository.findById(categoryId)
+                .orElseThrow(() -> new RuntimeException("Category not found"));
+        return videoRepository.findByLessonIdAndTypeAndCategory(lessonId, VideoType.LESSON, category)
+                .stream()
+                .map(video -> mapper.convertVideoToDto(video, currentUser.getId()))
+                .toList();
     }
 
-    private String generateObjectKey(Lesson lesson, VideoType type, VideoCategory category, String originalFilename) {
+    private String generateObjectKey(Lesson lesson, VideoType type, String categoryName, String originalFilename) {
         String extension = getFileExtension(originalFilename);
-        String categoryPath = category != null ? category.name().toLowerCase() : type.name().toLowerCase();
-        return String.format(
-                "courses/%d/lessons/%d/%s/%d.%s",
-                lesson.getCourse().getId(),
-                lesson.getId(),
-                categoryPath,
-                System.currentTimeMillis(),
-                extension
-        );
+        String path = categoryName != null ? categoryName.toLowerCase() : type.name().toLowerCase();
+        return String.format("courses/%d/lessons/%d/%s/%d.%s",
+                lesson.getCourse().getId(), lesson.getId(), path, System.currentTimeMillis(), extension);
     }
 
     private String generateHomeworkObjectKey(Lesson lesson, Long userId) {

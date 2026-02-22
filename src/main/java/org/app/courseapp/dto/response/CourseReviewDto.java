@@ -22,6 +22,4 @@ public class CourseReviewDto {
     private Long reviewCount;
 
     private String colorCode;
-
-    private String month;
 }

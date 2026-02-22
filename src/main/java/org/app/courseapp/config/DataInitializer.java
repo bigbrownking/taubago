@@ -3,17 +3,21 @@ package org.app.courseapp.config;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.app.courseapp.model.RegistrationQuestion;
+import org.app.courseapp.model.Video;
+import org.app.courseapp.model.VideoCategory;
 import org.app.courseapp.model.users.Administrator;
 import org.app.courseapp.model.users.User;
 import org.app.courseapp.model.UserRole;
 import org.app.courseapp.repository.RegistrationQuestionRepository;
 import org.app.courseapp.repository.UserRepository;
 import org.app.courseapp.repository.UserRoleRepository;
+import org.app.courseapp.repository.VideoCategoryRepository;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Component;
 
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 
 @Slf4j
@@ -22,6 +26,7 @@ import java.util.Set;
 public class DataInitializer implements CommandLineRunner {
 
     private final UserRoleRepository userRoleRepository;
+    private final VideoCategoryRepository categoryRepository;
     private final RegistrationQuestionRepository registrationQuestionRepository;
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
@@ -40,6 +45,7 @@ public class DataInitializer implements CommandLineRunner {
         createAdminIfNotExists(roleAdmin);
 
         createRegistrationQuestions();
+        createVideoCategories();
         log.info("✅ Data initialization completed");
     }
 
@@ -99,5 +105,14 @@ public class DataInitializer implements CommandLineRunner {
         registrationQuestionRepository.save(RegistrationQuestion.builder().question("Проявляет ли ребенок интерес к самостоятельному приему пищи?").topic("Самообслуживание").orderNumber(order++).isActive(true).build());
         registrationQuestionRepository.save(RegistrationQuestion.builder().question("Дает ли ребенок знать о физиологических нуждах?").topic("Самообслуживание").orderNumber(order++).isActive(true).build());
         registrationQuestionRepository.save(RegistrationQuestion.builder().question("Пытается ли ребенок помогать при одевании?").topic("Самообслуживание").orderNumber(order++).isActive(true).build());
+    }
+    private void createVideoCategories(){
+        if (categoryRepository.count() == 0) {
+            categoryRepository.saveAll(List.of(
+                    VideoCategory.builder().name("Крупная моторика").build(),
+                    VideoCategory.builder().name("Мелкая моторика").build(),
+                    VideoCategory.builder().name("Зрительно-слуховое восприятие").build()
+            ));
+        }
     }
 }

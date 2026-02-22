@@ -3,8 +3,12 @@ package org.app.courseapp.controller;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import org.app.courseapp.dto.response.RegistrationQuestionDto;
+import org.app.courseapp.model.VideoCategory;
 import org.app.courseapp.repository.RegistrationQuestionRepository;
+import org.app.courseapp.service.RegistrationQuestionService;
+import org.app.courseapp.service.VideoCategoryService;
 import org.app.courseapp.util.Mapper;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
@@ -16,14 +20,16 @@ import java.util.List;
 @RequestMapping("/dict")
 @Tag(name = "Dictionary Management", description = "APIs for dict management operations")
 public class DictionaryController {
-    private final Mapper mapper;
-    private final RegistrationQuestionRepository registrationQuestionRepository;
+    private final VideoCategoryService videoCategoryService;
+    private final RegistrationQuestionService registrationQuestionService;
 
     @GetMapping("/questions")
-    public List<RegistrationQuestionDto> getRegistrationQuestions(){
-        return mapper.convertRegistrationQuestionsToDto(
-                registrationQuestionRepository.findAllByIsActiveTrueOrderByOrderNumber()
-        );
+    public ResponseEntity<List<RegistrationQuestionDto>> getRegistrationQuestions() {
+        return ResponseEntity.ok(registrationQuestionService.getAllActiveQuestions());
+    }
+    @GetMapping("/categories")
+    public ResponseEntity<List<VideoCategory>> getCategories() {
+        return ResponseEntity.ok(videoCategoryService.getAll());
     }
 
 }

@@ -32,8 +32,8 @@ public class Video {
     @Column(nullable = false)
     private VideoType type;
 
-    @Enumerated(EnumType.STRING)
-    @Column(name = "category")
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "category_id")
     private VideoCategory category;
 
     @Column(name = "object_key", nullable = false)

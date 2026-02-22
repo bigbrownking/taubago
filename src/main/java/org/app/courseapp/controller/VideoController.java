@@ -5,16 +5,15 @@ import io.minio.MinioClient;
 import io.minio.StatObjectArgs;
 import io.minio.StatObjectResponse;
 import lombok.RequiredArgsConstructor;
-import org.app.courseapp.dto.response.UploadUrlResponse;
 import org.app.courseapp.dto.response.VideoDto;
 import org.app.courseapp.model.Video;
-import org.app.courseapp.model.VideoCategory;
 import org.app.courseapp.repository.VideoRepository;
 import org.app.courseapp.service.VideoService;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -35,25 +34,6 @@ public class VideoController {
     @GetMapping("/lesson/{lessonId}")
     public ResponseEntity<List<VideoDto>> getVideosByLesson(@PathVariable Long lessonId) {
         return ResponseEntity.ok(videoService.getVideosByLesson(lessonId, null));
-    }
-
-    @PostMapping("/lesson/{lessonId}/homework/upload-url")
-    public ResponseEntity<UploadUrlResponse> getHomeworkUploadUrl(@PathVariable Long lessonId) {
-        return ResponseEntity.ok(videoService.getHomeworkUploadUrl(lessonId));
-    }
-
-    @PostMapping("/lesson/{lessonId}/homework/confirm")
-    public ResponseEntity<VideoDto> confirmHomeworkUpload(
-            @PathVariable Long lessonId,
-            @RequestBody Map<String, Object> request
-    ) {
-        String objectKey = request.get("objectKey").toString();
-        String title = request.get("title").toString();
-        Long fileSize = Long.valueOf(request.get("fileSize").toString());
-
-        return ResponseEntity.ok(
-                videoService.confirmHomeworkUpload(lessonId, objectKey, title, fileSize)
-        );
     }
 
     @PutMapping("/{videoId}/progress")
@@ -129,21 +109,22 @@ public class VideoController {
     }
 
     @PostMapping("/lesson/{lessonId}/upload")
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<VideoDto> uploadLessonVideo(
             @PathVariable Long lessonId,
             @RequestParam("file") MultipartFile file,
             @RequestParam("title") String title,
-            @RequestParam("category") VideoCategory category
+            @RequestParam("categoryId") Long categoryId
     ) throws IOException {
-        return ResponseEntity.ok(videoService.uploadLessonVideo(lessonId, file, title, category));
+        return ResponseEntity.ok(videoService.uploadLessonVideo(lessonId, file, title, categoryId));
     }
 
-    @GetMapping("/lesson/{lessonId}/category/{category}")
+    @GetMapping("/lesson/{lessonId}/category/{categoryId}")
     public ResponseEntity<List<VideoDto>> getVideosByCategory(
             @PathVariable Long lessonId,
-            @PathVariable VideoCategory category
+            @PathVariable Long categoryId
     ) {
-        return ResponseEntity.ok(videoService.getLessonVideosByCategory(lessonId, category));
+        return ResponseEntity.ok(videoService.getLessonVideosByCategory(lessonId, categoryId));
     }
 
     @GetMapping("/lesson/{lessonId}/homework/my")
