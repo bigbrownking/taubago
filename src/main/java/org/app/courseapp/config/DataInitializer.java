@@ -2,18 +2,12 @@ package org.app.courseapp.config;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.app.courseapp.model.RegistrationQuestion;
-import org.app.courseapp.model.Video;
-import org.app.courseapp.model.VideoCategory;
+import org.app.courseapp.model.*;
 import org.app.courseapp.model.users.Administrator;
 import org.app.courseapp.model.users.Curator;
 import org.app.courseapp.model.users.Parent;
 import org.app.courseapp.model.users.User;
-import org.app.courseapp.model.UserRole;
-import org.app.courseapp.repository.RegistrationQuestionRepository;
-import org.app.courseapp.repository.UserRepository;
-import org.app.courseapp.repository.UserRoleRepository;
-import org.app.courseapp.repository.VideoCategoryRepository;
+import org.app.courseapp.repository.*;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Component;
@@ -29,6 +23,7 @@ public class DataInitializer implements CommandLineRunner {
 
     private final UserRoleRepository userRoleRepository;
     private final VideoCategoryRepository categoryRepository;
+    private final DiagnosisRepository diagnosisRepository;
     private final RegistrationQuestionRepository registrationQuestionRepository;
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
@@ -49,6 +44,8 @@ public class DataInitializer implements CommandLineRunner {
 
         createRegistrationQuestions();
         createVideoCategories();
+        createDiagnosis();
+
         log.info("✅ Data initialization completed");
     }
 
@@ -158,6 +155,18 @@ public class DataInitializer implements CommandLineRunner {
                     VideoCategory.builder().name("Крупная моторика").build(),
                     VideoCategory.builder().name("Мелкая моторика").build(),
                     VideoCategory.builder().name("Зрительно-слуховое восприятие").build()
+            ));
+        }
+    }
+
+    private void createDiagnosis(){
+        if (diagnosisRepository.count() == 0) {
+            diagnosisRepository.saveAll(List.of(
+                    Diagnosis.builder().name("No diagnosis yet").build(),
+                    Diagnosis.builder().name("Speech delay (ZRR)").build(),
+                    Diagnosis.builder().name("Developmental delay (ZPR)").build(),
+                    Diagnosis.builder().name("Autism Spectrum (ASD)").build(),
+                    Diagnosis.builder().name("Other").build()
             ));
         }
     }
