@@ -6,13 +6,10 @@ import org.app.courseapp.dto.request.*;
 import org.app.courseapp.dto.response.JwtResponse;
 import org.app.courseapp.dto.response.PasswordResetResponse;
 import org.app.courseapp.dto.response.SignUpResponse;
-import org.app.courseapp.model.PasswordResetToken;
-import org.app.courseapp.model.RegistrationAnswer;
-import org.app.courseapp.model.RegistrationQuestion;
+import org.app.courseapp.model.*;
 import org.app.courseapp.model.users.Child;
 import org.app.courseapp.model.users.Parent;
 import org.app.courseapp.model.users.User;
-import org.app.courseapp.model.UserRole;
 import org.app.courseapp.repository.*;
 import org.app.courseapp.security.jwt.JwtTokenUtil;
 import org.app.courseapp.service.AuthService;
@@ -39,6 +36,7 @@ public class AuthServiceImpl implements AuthService {
     private final UserRoleRepository userRoleRepository;
     private final PasswordEncoder passwordEncoder;
     private final AuthenticationManager authenticationManager;
+    private final DiagnosisRepository diagnosisRepository;
     private final RegistrationQuestionRepository registrationQuestionRepository;
     private final RegistrationAnswerRepository registrationAnswerRepository;
     private final JwtTokenUtil jwtTokenUtil;
@@ -85,11 +83,17 @@ public class AuthServiceImpl implements AuthService {
 
         // Добавляем первого ребенка, если указан
         if (request.getFirstChild() != null) {
+            Diagnosis diagnosis = null;
+            if (request.getFirstChild().getDiagnosisId() != null) {
+                diagnosis = diagnosisRepository.findById(request.getFirstChild().getDiagnosisId())
+                        .orElseThrow(() -> new RuntimeException("Diagnosis not found"));
+            }
+
             Child child = Child.builder()
                     .name(request.getFirstChild().getName())
                     .surname(request.getFirstChild().getSurname())
                     .age(request.getFirstChild().getAge())
-                    .diagnosis(request.getFirstChild().getDiagnosis())
+                    .diagnosis(diagnosis)
                     .active(true)
                     .build();
             parent.addChild(child);

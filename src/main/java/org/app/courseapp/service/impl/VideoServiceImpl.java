@@ -36,7 +36,7 @@ public class VideoServiceImpl implements VideoService {
 
     @Override
     @Transactional(readOnly = true)
-    public List<VideoDto> getVideosByLesson(Long lessonId, Long userId) {
+    public List<VideoDto> getVideosByLesson(Long lessonId) {
         User currentUser = userService.getCurrentUser();
         List<Video> videos = videoRepository.findByLessonId(lessonId);
         return videos.stream()
@@ -119,6 +119,7 @@ public class VideoServiceImpl implements VideoService {
                 .toList();
     }
 
+    @Override
     @Transactional
     public VideoDto uploadLessonVideo(
             Long lessonId,
@@ -174,16 +175,6 @@ public class VideoServiceImpl implements VideoService {
         String path = categoryName != null ? categoryName.toLowerCase() : type.name().toLowerCase();
         return String.format("courses/%d/lessons/%d/%s/%d.%s",
                 lesson.getCourse().getId(), lesson.getId(), path, System.currentTimeMillis(), extension);
-    }
-
-    private String generateHomeworkObjectKey(Lesson lesson, Long userId) {
-        return String.format(
-                "courses/%d/lessons/%d/homework/user_%d_%d.mp4",
-                lesson.getCourse().getId(),
-                lesson.getId(),
-                userId,
-                System.currentTimeMillis()
-        );
     }
 
     private String getFileExtension(String filename) {

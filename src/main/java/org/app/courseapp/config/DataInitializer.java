@@ -6,6 +6,8 @@ import org.app.courseapp.model.RegistrationQuestion;
 import org.app.courseapp.model.Video;
 import org.app.courseapp.model.VideoCategory;
 import org.app.courseapp.model.users.Administrator;
+import org.app.courseapp.model.users.Curator;
+import org.app.courseapp.model.users.Parent;
 import org.app.courseapp.model.users.User;
 import org.app.courseapp.model.UserRole;
 import org.app.courseapp.repository.RegistrationQuestionRepository;
@@ -41,8 +43,9 @@ public class DataInitializer implements CommandLineRunner {
         UserRole roleSpecialist = createRoleIfNotExists("ROLE_SPECIALIST");
         UserRole roleCurator = createRoleIfNotExists("ROLE_CURATOR");
 
-        // Создаём админа по умолчанию
         createAdminIfNotExists(roleAdmin);
+        createParentIfNotExists(roleParent);
+        createCuratorIfNotExists(roleCurator);
 
         createRegistrationQuestions();
         createVideoCategories();
@@ -59,7 +62,50 @@ public class DataInitializer implements CommandLineRunner {
                     return saved;
                 });
     }
+    private void createCuratorIfNotExists(UserRole curatorRole) {
+        String curatorEmail = "curator@gmail.com";
 
+        if (!userRepository.existsByEmail(curatorEmail)) {
+            Curator curator = Curator.builder()
+                    .email(curatorEmail)
+                    .name("Curator")
+                    .surname("Curator")
+                    .password(passwordEncoder.encode("Curator123!"))
+                    .active(true)
+                    .roles(new HashSet<>(Set.of(curatorRole)))
+                    .build();
+
+            userRepository.save(curator);
+            log.info("✅ Created curator user: {}", curatorEmail);
+            log.warn("⚠️  Default curator credentials:");
+            log.warn("    Email: {}", curatorEmail);
+            log.warn("    Password: Curator123!");
+        } else {
+            log.debug("ℹ️  Parent user already exists");
+        }
+    }
+    private void createParentIfNotExists(UserRole parentRole) {
+        String parentEmail = "parent@gmail.com";
+
+        if (!userRepository.existsByEmail(parentEmail)) {
+            Parent parent = Parent.builder()
+                    .email(parentEmail)
+                    .name("Parent")
+                    .surname("Parent")
+                    .password(passwordEncoder.encode("Parent123!"))
+                    .active(true)
+                    .roles(new HashSet<>(Set.of(parentRole)))
+                    .build();
+
+            userRepository.save(parent);
+            log.info("✅ Created admin user: {}", parentEmail);
+            log.warn("⚠️  Default parent credentials:");
+            log.warn("    Email: {}", parentEmail);
+            log.warn("    Password: Parent123!");
+        } else {
+            log.debug("ℹ️  Parent user already exists");
+        }
+    }
     private void createAdminIfNotExists(UserRole adminRole) {
         String adminEmail = "admin@gmail.com";
 

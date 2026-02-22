@@ -1,10 +1,8 @@
 package org.app.courseapp.controller;
 
-import jakarta.validation.Valid;
 import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
 import lombok.RequiredArgsConstructor;
-import org.app.courseapp.dto.request.CreateLessonReportRequest;
 import org.app.courseapp.dto.response.LessonDto;
 import org.app.courseapp.dto.response.LessonReportDto;
 import org.app.courseapp.dto.response.ParentLessonReportFullDto;
@@ -14,12 +12,14 @@ import org.app.courseapp.service.LessonService;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
 import java.util.List;
 
+@Validated
 @RestController
 @RequestMapping("/lessons")
 @RequiredArgsConstructor

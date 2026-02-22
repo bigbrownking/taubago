@@ -5,6 +5,7 @@ import io.minio.MinioClient;
 import io.minio.StatObjectArgs;
 import io.minio.StatObjectResponse;
 import lombok.RequiredArgsConstructor;
+import org.app.courseapp.dto.request.UpdateProgressRequest;
 import org.app.courseapp.dto.response.VideoDto;
 import org.app.courseapp.model.Video;
 import org.app.courseapp.repository.VideoRepository;
@@ -33,16 +34,15 @@ public class VideoController {
 
     @GetMapping("/lesson/{lessonId}")
     public ResponseEntity<List<VideoDto>> getVideosByLesson(@PathVariable Long lessonId) {
-        return ResponseEntity.ok(videoService.getVideosByLesson(lessonId, null));
+        return ResponseEntity.ok(videoService.getVideosByLesson(lessonId));
     }
 
     @PutMapping("/{videoId}/progress")
     public ResponseEntity<Void> updateProgress(
             @PathVariable Long videoId,
-            @RequestBody Map<String, Long> request
-    ) {
-        Long watchedSeconds = request.get("watchedSeconds");
-        videoService.updateProgress(videoId, watchedSeconds);
+            @RequestBody UpdateProgressRequest request
+            ) {
+        videoService.updateProgress(videoId, request.getWatchedSeconds());
         return ResponseEntity.ok().build();
     }
 

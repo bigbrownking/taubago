@@ -3,7 +3,6 @@ package org.app.courseapp.service.impl;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.app.courseapp.config.minio.MinioProperties;
-import org.app.courseapp.dto.request.CreateLessonReportRequest;
 import org.app.courseapp.dto.response.LessonReportDto;
 import org.app.courseapp.dto.response.ParentLessonReportFullDto;
 import org.app.courseapp.dto.response.PublicLessonReportDto;

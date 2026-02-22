@@ -1,6 +1,5 @@
 package org.app.courseapp.service;
 
-import org.app.courseapp.dto.request.CreateLessonReportRequest;
 import org.app.courseapp.dto.response.LessonReportDto;
 import org.app.courseapp.dto.response.ParentLessonReportFullDto;
 import org.app.courseapp.dto.response.PublicLessonReportDto;

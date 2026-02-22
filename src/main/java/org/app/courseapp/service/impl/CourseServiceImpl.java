@@ -130,7 +130,7 @@ public class CourseServiceImpl implements CourseService {
         boolean hasActiveCourse = enrollmentRepository
                 .findByUserId(currentUser.getId())
                 .stream()
-                .anyMatch(e -> !Boolean.TRUE.equals(e.getCompleted()));
+                .anyMatch(e -> !Boolean.TRUE.equals(e.isCompleted()));
 
         if (hasActiveCourse) {
             throw new RuntimeException("You must complete your current course before enrolling in a new one");
@@ -140,13 +140,13 @@ public class CourseServiceImpl implements CourseService {
                 .orElseThrow(() -> new RuntimeException("Course not found"));
 
         // Проверяем что предыдущий курс по порядку завершён
-        if (course.getOrder() != null && course.getOrder() > 1) {
+        if (course.getOrder() > 1) {
             Course previousCourse = courseRepository.findByOrder(course.getOrder() - 1)
                     .orElseThrow(() -> new RuntimeException("Previous course not found"));
 
             boolean previousCompleted = enrollmentRepository
                     .findByUserIdAndCourseId(currentUser.getId(), previousCourse.getId())
-                    .map(e -> Boolean.TRUE.equals(e.getCompleted()))
+                    .map(e -> Boolean.TRUE.equals(e.isCompleted()))
                     .orElse(false);
 
             if (!previousCompleted) {
@@ -217,7 +217,7 @@ public class CourseServiceImpl implements CourseService {
                 .findByUserIdAndCourseId(currentUser.getId(), courseId)
                 .orElseThrow(() -> new RuntimeException("Not enrolled in this course"));
 
-        if (Boolean.TRUE.equals(enrollment.getCompleted())) {
+        if (Boolean.TRUE.equals(enrollment.isCompleted())) {
             throw new RuntimeException("Course already completed");
         }
 

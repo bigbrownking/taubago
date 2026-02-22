@@ -3,6 +3,7 @@ package org.app.courseapp.model.users;
 import jakarta.persistence.*;
 import lombok.*;
 import lombok.experimental.SuperBuilder;
+import org.app.courseapp.model.Diagnosis;
 import org.springframework.data.annotation.CreatedDate;
 import org.springframework.data.annotation.LastModifiedDate;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
@@ -32,8 +33,9 @@ public class Child {
     @Column(name = "age", nullable = false)
     private Integer age;
 
-    @Column(name = "diagnosis")
-    private String diagnosis;
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "diagnosis_id")
+    private Diagnosis diagnosis;
 
     @Column(name = "profile_picture_url", columnDefinition = "TEXT")
     private String profilePictureUrl;

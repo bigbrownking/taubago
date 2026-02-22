@@ -79,6 +79,6 @@ public class SignUpRequest {
         private Integer age;
 
         @Nullable
-        private String diagnosis;
+        private Long diagnosisId;
     }
 }

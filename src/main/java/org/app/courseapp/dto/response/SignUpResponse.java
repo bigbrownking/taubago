@@ -51,7 +51,7 @@ public class SignUpResponse {
                                 .name(child.getName())
                                 .surname(child.getSurname())
                                 .age(child.getAge())
-                                .diagnosis(child.getDiagnosis())
+                                .diagnosis(child.getDiagnosis().getName())
                                 .build())
                         .collect(Collectors.toList()))
                 .totalAnswers(totalAnswers)

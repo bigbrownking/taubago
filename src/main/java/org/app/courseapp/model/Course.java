@@ -31,10 +31,10 @@ public class Course {
     private String description;
 
     @Column(name = "duration_days")
-    private Integer durationDays;
+    private int durationDays;
 
     @Column(name = "course_order", unique = true)
-    private Integer order;
+    private int order;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "created_by_user_id")

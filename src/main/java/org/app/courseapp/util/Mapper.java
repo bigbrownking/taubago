@@ -38,16 +38,16 @@ public class Mapper {
             List<CourseEnrollment> userEnrollments = enrollmentRepository.findByUserId(userId);
 
             boolean hasActiveCourse = userEnrollments.stream()
-                    .anyMatch(e -> !Boolean.TRUE.equals(e.getCompleted()));
+                    .anyMatch(e -> !Boolean.TRUE.equals(e.isCompleted()));
 
             boolean previousCompleted = true;
-            if (course.getOrder() != null && course.getOrder() > 1) {
+            if (course.getOrder() > 1) {
                 Optional<Course> previousCourse = courseRepository.findByOrder(course.getOrder() - 1);
                 if (previousCourse.isPresent()) {
                     previousCompleted = userEnrollments.stream()
                             .filter(e -> e.getCourse().getId().equals(previousCourse.get().getId()))
                             .findFirst()
-                            .map(e -> Boolean.TRUE.equals(e.getCompleted()))
+                            .map(e -> Boolean.TRUE.equals(e.isCompleted()))
                             .orElse(false);
                 }
             }
