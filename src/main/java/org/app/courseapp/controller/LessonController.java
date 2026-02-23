@@ -66,9 +66,10 @@ public class LessonController {
     ) {
         return ResponseEntity.ok(reportService.getOtherParentsReports(lessonId));
     }
-    @GetMapping("/current")
-    public ResponseEntity<LessonDto> getCurrentLesson() {
-        return ResponseEntity.ok(lessonService.getCurrentLesson());
+    @GetMapping("/{courseId}/current")
+    public ResponseEntity<LessonDto> getCurrentLesson(
+            @PathVariable long courseId) {
+        return ResponseEntity.ok(lessonService.getCurrentLesson(courseId));
     }
 
     @GetMapping("/{lessonId}/reports/full")

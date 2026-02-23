@@ -56,7 +56,52 @@ public class CourseServiceImpl implements CourseService {
                 .map(enrollment -> mapper.convertCourseToDto(enrollment.getCourse(), currentUser.getId()))
                 .toList();
     }
+    @Override
+    @Transactional(readOnly = true)
+    public List<CourseDto> getMyUpcomingCourses() {
+        User currentUser = userService.getCurrentUser();
 
+        if (!(currentUser instanceof Parent)) {
+            return List.of();
+        }
+
+        List<CourseEnrollment> userEnrollments = enrollmentRepository.findByUserId(currentUser.getId());
+
+        List<Long> enrolledCourseIds = userEnrollments.stream()
+                .map(e -> e.getCourse().getId())
+                .toList();
+
+        List<Course> allCourses = courseRepository.findAllByOrderByOrderAsc();
+
+        Integer nextAvailableOrder = determineNextAvailableOrder(userEnrollments, allCourses);
+
+        return allCourses.stream()
+                .filter(course -> !enrolledCourseIds.contains(course.getId()))
+                .filter(course -> course.getOrder() >= nextAvailableOrder)
+                .map(course -> mapper.convertCourseToDto(course, currentUser.getId()))
+                .toList();
+    }
+
+    private Integer determineNextAvailableOrder(List<CourseEnrollment> enrollments, List<Course> allCourses) {
+        if (enrollments.isEmpty()) {
+            return 1;
+        }
+
+        int lastCompletedOrder = enrollments.stream()
+                .filter(e -> Boolean.TRUE.equals(e.isCompleted()))
+                .map(e -> e.getCourse().getOrder())
+                .max(Integer::compareTo)
+                .orElse(0);
+
+        boolean hasActiveCourse = enrollments.stream()
+                .anyMatch(e -> !Boolean.TRUE.equals(e.isCompleted()));
+
+        if (hasActiveCourse) {
+            return lastCompletedOrder + 2;
+        } else {
+            return lastCompletedOrder + 1;
+        }
+    }
     @Override
     @Transactional(readOnly = true)
     public CourseDto getCourseById(Long courseId) {

@@ -45,17 +45,15 @@ public class LessonServiceImpl implements LessonService {
 
     @Override
     @Transactional(readOnly = true)
-    public LessonDto getCurrentLesson() {
+    public LessonDto getCurrentLesson(long courseId) {
         User currentUser = userService.getCurrentUser();
 
         CourseEnrollment activeEnrollment = courseEnrollmentRepository
                 .findByUserId(currentUser.getId())
                 .stream()
                 .filter(e -> !Boolean.TRUE.equals(e.isCompleted()))
-                .findFirst()
-                .orElseThrow(() -> new RuntimeException("No active course found"));
-
-        Long courseId = activeEnrollment.getCourse().getId();
+                .filter(e -> e.getCourse().getId().equals(courseId))
+                .findFirst().orElseThrow(() -> new RuntimeException("No active enrollment found for this course"));
 
         Lesson currentLesson = lessonRepository
                 .findFirstIncompleteLessonByCourseAndUser(courseId, currentUser.getId())

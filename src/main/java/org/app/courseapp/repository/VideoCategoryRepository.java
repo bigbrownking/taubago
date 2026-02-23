@@ -9,4 +9,5 @@ import java.util.Optional;
 @Repository
 public interface VideoCategoryRepository extends JpaRepository<VideoCategory, Long> {
     Optional<VideoCategory> findByName(String name);
+    boolean existsByName(String name);
 }

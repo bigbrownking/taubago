@@ -1,12 +1,10 @@
 package org.app.courseapp.dto.response;
 
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Data;
-import lombok.NoArgsConstructor;
+import lombok.*;
 import org.app.courseapp.model.VideoType;
 
-@Data
+@Getter
+@Setter
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
@@ -14,6 +12,8 @@ public class VideoDto {
     private Long id;
     private String title;
     private VideoType type;
+    private Long categoryId;
+    private String categoryName;
     private String videoUrl;
     private Long durationSeconds;
     private Long fileSizeBytes;

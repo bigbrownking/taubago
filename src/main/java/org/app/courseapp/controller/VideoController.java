@@ -4,6 +4,8 @@ import io.minio.GetObjectArgs;
 import io.minio.MinioClient;
 import io.minio.StatObjectArgs;
 import io.minio.StatObjectResponse;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import org.app.courseapp.dto.request.UpdateProgressRequest;
 import org.app.courseapp.dto.response.VideoDto;
@@ -21,11 +23,11 @@ import org.springframework.web.multipart.MultipartFile;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.List;
-import java.util.Map;
 
 @RestController
 @RequestMapping("/videos")
 @RequiredArgsConstructor
+@Tag(name = "Video Management", description = "APIs for video operations")
 public class VideoController {
 
     private final VideoService videoService;
@@ -33,38 +35,60 @@ public class VideoController {
     private final VideoRepository videoRepository;
 
     @GetMapping("/lesson/{lessonId}")
+    @Operation(summary = "Get videos by lesson", description = "Get all accessible videos for a lesson")
     public ResponseEntity<List<VideoDto>> getVideosByLesson(@PathVariable Long lessonId) {
         return ResponseEntity.ok(videoService.getVideosByLesson(lessonId));
     }
 
+    @GetMapping("/{videoId}")
+    @Operation(summary = "Get video by ID", description = "Get video details with access check")
+    public ResponseEntity<VideoDto> getVideoById(@PathVariable Long videoId) {
+        return ResponseEntity.ok(videoService.getVideoById(videoId));
+    }
+
+    @GetMapping("/{videoId}/has-access")
+    @Operation(summary = "Check video access", description = "Check if current user has access to video")
+    public ResponseEntity<Boolean> hasAccessToVideo(@PathVariable Long videoId) {
+        return ResponseEntity.ok(videoService.hasAccessToVideo(videoId));
+    }
+
     @PutMapping("/{videoId}/progress")
+    @Operation(summary = "Update video progress", description = "Update watch progress for a video")
     public ResponseEntity<Void> updateProgress(
             @PathVariable Long videoId,
             @RequestBody UpdateProgressRequest request
-            ) {
+    ) {
         videoService.updateProgress(videoId, request.getWatchedSeconds());
         return ResponseEntity.ok().build();
     }
 
     @PutMapping("/{videoId}/complete")
+    @Operation(summary = "Mark video as completed", description = "Mark a video as fully watched")
     public ResponseEntity<Void> markAsCompleted(@PathVariable Long videoId) {
         videoService.markAsCompleted(videoId);
         return ResponseEntity.ok().build();
     }
 
     @DeleteMapping("/{videoId}")
+    @Operation(summary = "Delete video", description = "Delete a video (admin or owner)")
     public ResponseEntity<Void> deleteVideo(@PathVariable Long videoId) {
         videoService.deleteVideo(videoId);
         return ResponseEntity.ok().build();
     }
 
-    @GetMapping("/videos/{id}/stream")
+    @GetMapping("/{id}/stream")
+    @Operation(summary = "Stream video", description = "Stream video with range support and access check")
     public ResponseEntity<byte[]> streamVideo(
             @PathVariable Long id,
             @RequestHeader(value = "Range", required = false) String range
     ) throws Exception {
 
-        Video video = videoRepository.findById(id).orElseThrow();
+        if (!videoService.hasAccessToVideo(id)) {
+            throw new RuntimeException("Access denied: You don't have access to this video");
+        }
+
+        Video video = videoRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Video not found"));
 
         StatObjectResponse stat = minioClient.statObject(
                 StatObjectArgs.builder()
@@ -110,6 +134,7 @@ public class VideoController {
 
     @PostMapping("/lesson/{lessonId}/upload")
     @PreAuthorize("hasRole('ADMIN')")
+    @Operation(summary = "Upload lesson video", description = "Upload a new video to a lesson (admin only)")
     public ResponseEntity<VideoDto> uploadLessonVideo(
             @PathVariable Long lessonId,
             @RequestParam("file") MultipartFile file,
@@ -120,6 +145,7 @@ public class VideoController {
     }
 
     @GetMapping("/lesson/{lessonId}/category/{categoryId}")
+    @Operation(summary = "Get videos by category", description = "Get lesson videos filtered by category")
     public ResponseEntity<List<VideoDto>> getVideosByCategory(
             @PathVariable Long lessonId,
             @PathVariable Long categoryId
@@ -128,6 +154,7 @@ public class VideoController {
     }
 
     @GetMapping("/lesson/{lessonId}/homework/my")
+    @Operation(summary = "Get my homework videos", description = "Get homework videos uploaded by current user")
     public ResponseEntity<List<VideoDto>> getMyHomework(@PathVariable Long lessonId) {
         return ResponseEntity.ok(videoService.getMyHomeworkVideos(lessonId));
     }
