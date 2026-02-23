@@ -84,6 +84,7 @@ public class Mapper {
                 .description(course.getDescription())
                 .durationDays(course.getDurationDays())
                 .createdByEmail(course.getCreatedBy() != null ? course.getCreatedBy().getEmail() : null)
+                .keywords(course.getKeywords())
                 .createdAt(course.getCreatedAt())
                 .updatedAt(course.getUpdatedAt())
                 .isEnrolled(isEnrolled)

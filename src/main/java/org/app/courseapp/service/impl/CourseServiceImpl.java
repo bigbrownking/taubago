@@ -86,10 +86,13 @@ public class CourseServiceImpl implements CourseService {
         Course course = new Course();
         course.setTitle(request.getTitle());
         course.setDescription(request.getDescription());
+
         course.setDurationDays(request.getDurationDays());
         course.setCreatedBy(currentUser);
         course.setOrder(courseRepository.findNextOrder());
-
+        if (request.getKeywords() != null) {
+            course.setKeywords(request.getKeywords());
+        }
         course = courseRepository.save(course);
 
 

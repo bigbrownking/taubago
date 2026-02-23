@@ -48,6 +48,11 @@ public class Course {
     @Column(name = "updated_at")
     private LocalDateTime updatedAt;
 
+    @ElementCollection
+    @CollectionTable(name = "course_keywords", joinColumns = @JoinColumn(name = "course_id"))
+    @Column(name = "keyword")
+    private List<String> keywords = new ArrayList<>();
+
     @OneToMany(mappedBy = "course", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<Lesson> lessons = new ArrayList<>();
 
