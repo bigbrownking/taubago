@@ -4,6 +4,8 @@ import io.swagger.v3.oas.annotations.Operation;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.app.courseapp.dto.request.CreateCuratorRequest;
+import org.app.courseapp.dto.request.CreateSpecialistRequest;
 import org.app.courseapp.dto.response.CourseDto;
 import org.app.courseapp.dto.request.CreateCourseRequest;
 import org.app.courseapp.dto.response.RegistrationQuestionDto;
@@ -54,5 +56,19 @@ public class AdminController {
     public ResponseEntity<Void> addVideoCategories(@RequestBody List<String> categories) {
         videoCategoryService.create(categories);
         return ResponseEntity.ok().build();
+    }
+
+    @PostMapping("register/specialist")
+    public ResponseEntity<BaseUserProfileDto> registerSpecialist(
+            @RequestBody CreateSpecialistRequest request
+    ) {
+        return ResponseEntity.ok(userService.registerSpecialist(request));
+    }
+
+    @PostMapping("register/curator")
+    public ResponseEntity<BaseUserProfileDto> registerCurator(
+            @RequestBody CreateCuratorRequest request
+    ) {
+        return ResponseEntity.ok(userService.registerCurator(request));
     }
 }

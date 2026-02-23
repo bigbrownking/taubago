@@ -2,6 +2,8 @@ package org.app.courseapp.service.impl;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.app.courseapp.dto.request.CreateCuratorRequest;
+import org.app.courseapp.dto.request.CreateSpecialistRequest;
 import org.app.courseapp.dto.request.UpdateProfileRequest;
 import org.app.courseapp.dto.response.*;
 import org.app.courseapp.dto.response.userProfile.*;
@@ -10,13 +12,17 @@ import org.app.courseapp.model.UserRole;
 import org.app.courseapp.model.users.*;
 import org.app.courseapp.repository.RegistrationAnswerRepository;
 import org.app.courseapp.repository.UserRepository;
+import org.app.courseapp.repository.UserRoleRepository;
 import org.app.courseapp.service.UserService;
+import org.app.courseapp.util.Mapper;
+import org.app.courseapp.util.RandomPasswordGenerator;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 @Slf4j
@@ -25,8 +31,10 @@ import java.util.stream.Collectors;
 public class UserServiceImpl implements UserService {
 
     private final UserRepository userRepository;
-    private final RegistrationAnswerRepository registrationAnswerRepository;
+    private final UserRoleRepository userRoleRepository;
     private final PasswordEncoder passwordEncoder;
+    private final Mapper mapper;
+    private final RandomPasswordGenerator passwordGenerator;
 
     @Override
     public User getCurrentUser() {
@@ -39,7 +47,7 @@ public class UserServiceImpl implements UserService {
     @Transactional(readOnly = true)
     public BaseUserProfileDto getMyProfile() {
         User currentUser = getCurrentUser();
-        return convertToProfileDto(currentUser);
+        return mapper.convertToProfileDto(currentUser);
     }
 
     @Override
@@ -47,7 +55,7 @@ public class UserServiceImpl implements UserService {
     public BaseUserProfileDto getUserProfile(String email) {
         User user = userRepository.findByEmail(email)
                 .orElseThrow(() -> new RuntimeException("User not found"));
-        return convertToProfileDto(user);
+        return mapper.convertToProfileDto(user);
     }
 
     @Override
@@ -55,8 +63,7 @@ public class UserServiceImpl implements UserService {
     public BaseUserProfileDto updateMyProfile(UpdateProfileRequest request) {
         User currentUser = getCurrentUser();
 
-        if (currentUser instanceof Parent) {
-            Parent parent = (Parent) currentUser;
+        if (currentUser instanceof Parent parent) {
             parent.setName(request.getName());
             parent.setSurname(request.getSurname());
             parent.setPhoneNumber(request.getPhoneNumber());
@@ -68,8 +75,7 @@ public class UserServiceImpl implements UserService {
             userRepository.save(parent);
             log.info("Parent profile updated: {}", parent.getEmail());
 
-        } else if (currentUser instanceof Administrator) {
-            Administrator admin = (Administrator) currentUser;
+        } else if (currentUser instanceof Administrator admin) {
             admin.setName(request.getName());
             admin.setSurname(request.getSurname());
             admin.setPhoneNumber(request.getPhoneNumber());
@@ -81,12 +87,12 @@ public class UserServiceImpl implements UserService {
             userRepository.save(admin);
             log.info("Administrator profile updated: {}", admin.getEmail());
 
-        } else if (currentUser instanceof Specialist) {
-            Specialist specialist = (Specialist) currentUser;
+        } else if (currentUser instanceof Specialist specialist) {
             specialist.setName(request.getName());
             specialist.setSurname(request.getSurname());
             specialist.setPhoneNumber(request.getPhoneNumber());
             specialist.setSpecialization(request.getSpecialization());
+            specialist.setExperienceYears(request.getExperienceYears());
 
             if (request.getPassword() != null && !request.getPassword().isBlank()) {
                 specialist.setPassword(passwordEncoder.encode(request.getPassword()));
@@ -96,93 +102,41 @@ public class UserServiceImpl implements UserService {
             log.info("Specialist profile updated: {}", specialist.getEmail());
         }
 
-        return convertToProfileDto(currentUser);
+        return mapper.convertToProfileDto(currentUser);
     }
 
-    // Helper method to convert User to appropriate DTO
-    private BaseUserProfileDto convertToProfileDto(User user) {
-        if (user instanceof Parent) {
-            return convertParentToDto((Parent) user);
-        } else if (user instanceof Administrator) {
-            return convertAdministratorToDto((Administrator) user);
-        } else if (user instanceof Specialist) {
-            return convertSpecialistToDto((Specialist) user);
-        }
-        throw new RuntimeException("Unknown user type");
+    @Override
+    public BaseUserProfileDto registerSpecialist(CreateSpecialistRequest request) {
+        Specialist specialist = Specialist.builder()
+                .name(request.getName())
+                .surname(request.getSurname())
+                .specialization(request.getSpecialization())
+                .experienceYears(request.getExperienceYears())
+                .focuses(request.getFocuses())
+                .phoneNumber(request.getPhoneNumber())
+                .roles(Set.of(userRoleRepository.findByName("ROLE_SPECIALIST")
+                        .orElseThrow(() -> new RuntimeException("Role not found"))))
+                .email(request.getEmail())
+                .password(passwordEncoder.encode(passwordGenerator.generate()))
+                .build();
+
+        userRepository.save(specialist);
+        return mapper.convertToProfileDto(specialist);
     }
 
-    private ParentProfileDto convertParentToDto(Parent parent) {
-        ParentProfileDto dto = new ParentProfileDto();
-        dto.setId(parent.getId());
-        dto.setEmail(parent.getEmail());
-        dto.setActive(parent.isActive());
-        dto.setCreatedDate(parent.getCreatedDate());
-        dto.setRoles(parent.getRoles().stream()
-                .map(role -> role.getName())
-                .collect(Collectors.toSet()));
-        dto.setUserType("PARENT");
-        dto.setName(parent.getName());
-        dto.setSurname(parent.getSurname());
-        dto.setPhoneNumber(parent.getPhoneNumber());
-        dto.setProfilePictureUrl(parent.getProfilePictureUrl());
+    @Override
+    public BaseUserProfileDto registerCurator(CreateCuratorRequest request) {
+        Curator curator = Curator.builder()
+                .name(request.getName())
+                .surname(request.getSurname())
+                .phoneNumber(request.getPhoneNumber())
+                .roles(Set.of(userRoleRepository.findByName("ROLE_CURATOR")
+                        .orElseThrow(() -> new RuntimeException("Role not found"))))
+                .email(request.getEmail())
+                .password(passwordEncoder.encode(passwordGenerator.generate()))
+                .build();
 
-        // Children
-        List<ChildDto> children = parent.getChildren().stream()
-                .filter(Child::isActive)
-                .map(ChildDto::fromEntity)
-                .collect(Collectors.toList());
-        dto.setChildren(children);
-        dto.setTotalChildren(children.size());
-
-        // Registration stats
-        List<RegistrationAnswer> answers = registrationAnswerRepository.findByParentId(parent.getId());
-        if (!answers.isEmpty()) {
-            long positiveCount = answers.stream().filter(RegistrationAnswer::getAnswer).count();
-            long negativeCount = answers.size() - positiveCount;
-            double percentage = (positiveCount * 100.0) / answers.size();
-
-            ParentProfileDto.RegistrationStats stats = ParentProfileDto.RegistrationStats.builder()
-                    .totalQuestions(answers.size())
-                    .positiveAnswers((int) positiveCount)
-                    .negativeAnswers((int) negativeCount)
-                    .positivePercentage(Math.round(percentage * 10.0) / 10.0)
-                    .build();
-            dto.setRegistrationStats(stats);
-        }
-
-        return dto;
-    }
-
-    private AdministratorProfileDto convertAdministratorToDto(Administrator admin) {
-        AdministratorProfileDto dto = new AdministratorProfileDto();
-        dto.setId(admin.getId());
-        dto.setEmail(admin.getEmail());
-        dto.setActive(admin.isActive());
-        dto.setCreatedDate(admin.getCreatedDate());
-        dto.setRoles(admin.getRoles().stream()
-                .map(UserRole::getName)
-                .collect(Collectors.toSet()));
-        dto.setUserType("ADMINISTRATOR");
-        dto.setName(admin.getName());
-        dto.setSurname(admin.getSurname());
-        dto.setPhoneNumber(admin.getPhoneNumber());
-        return dto;
-    }
-
-    private SpecialistProfileDto convertSpecialistToDto(Specialist specialist) {
-        SpecialistProfileDto dto = new SpecialistProfileDto();
-        dto.setId(specialist.getId());
-        dto.setEmail(specialist.getEmail());
-        dto.setActive(specialist.isActive());
-        dto.setCreatedDate(specialist.getCreatedDate());
-        dto.setRoles(specialist.getRoles().stream()
-                .map(UserRole::getName)
-                .collect(Collectors.toSet()));
-        dto.setUserType("SPECIALIST");
-        dto.setName(specialist.getName());
-        dto.setSurname(specialist.getSurname());
-        dto.setSpecialization(specialist.getSpecialization());
-        dto.setPhoneNumber(specialist.getPhoneNumber());
-        return dto;
+        userRepository.save(curator);
+        return mapper.convertToProfileDto(curator);
     }
 }

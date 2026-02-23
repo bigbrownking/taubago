@@ -1,5 +1,7 @@
 package org.app.courseapp.service;
 
+import org.app.courseapp.dto.request.CreateCuratorRequest;
+import org.app.courseapp.dto.request.CreateSpecialistRequest;
 import org.app.courseapp.dto.request.UpdateProfileRequest;
 import org.app.courseapp.dto.response.userProfile.BaseUserProfileDto;
 import org.app.courseapp.model.users.User;
@@ -9,4 +11,6 @@ public interface UserService {
     BaseUserProfileDto getMyProfile();
     BaseUserProfileDto getUserProfile(String email);
     BaseUserProfileDto updateMyProfile(UpdateProfileRequest request);
+    BaseUserProfileDto registerSpecialist(CreateSpecialistRequest request);
+    BaseUserProfileDto registerCurator(CreateCuratorRequest request);
 }

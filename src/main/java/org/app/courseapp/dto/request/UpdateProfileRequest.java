@@ -34,4 +34,6 @@ public class UpdateProfileRequest {
 
     @Nullable
     private String specialization;
+
+    private int experienceYears;
 }

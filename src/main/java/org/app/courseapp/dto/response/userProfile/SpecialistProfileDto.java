@@ -10,6 +10,7 @@ public class SpecialistProfileDto extends BaseUserProfileDto {
     private String name;
     private String surname;
     private String specialization;
+    private int experienceYears;
     private String phoneNumber;
     private String profilePictureUrl;
 }
