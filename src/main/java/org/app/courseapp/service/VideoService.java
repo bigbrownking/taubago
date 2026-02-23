@@ -7,6 +7,8 @@ import java.io.IOException;
 import java.util.List;
 
 public interface VideoService {
+    boolean hasAccessToVideo(Long videoId);
+    VideoDto getVideoById(Long videoId);
     List<VideoDto> getVideosByLesson(Long lessonId);
     void updateProgress(Long videoId, Long watchedSeconds);
     void markAsCompleted(Long videoId);

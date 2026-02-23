@@ -8,6 +8,7 @@ import java.util.List;
 public interface CourseService {
     List<CourseDto> getAllCourses();
     List<CourseDto> getMyEnrolledCourses();
+    List<CourseDto> getMyUpcomingCourses();
     CourseDto getCourseById(Long courseId);
     CourseDto createCourse(CreateCourseRequest request);
     void enrollInCourse(Long courseId);

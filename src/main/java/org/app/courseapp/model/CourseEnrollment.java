@@ -35,7 +35,7 @@ public class CourseEnrollment {
     private LocalDateTime enrolledAt;
 
     @Column(name = "progress_percentage")
-    private int progressPercentage = 0;
+    private long progressPercentage = 0;
 
     @Column(name = "completed")
     private boolean completed = false;

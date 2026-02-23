@@ -47,6 +47,11 @@ public class CourseController {
         return ResponseEntity.ok(courseService.getMyActiveCourses());
     }
 
+    @GetMapping("/courses/my/upcoming")
+    public ResponseEntity<List<CourseDto>> getMyUpcomingCourses() {
+        return ResponseEntity.ok(courseService.getMyUpcomingCourses());
+    }
+
     @GetMapping("/courses/my/completed")
     public ResponseEntity<List<CourseDto>> getMyCompletedCourses() {
         return ResponseEntity.ok(courseService.getMyCompletedCourses());

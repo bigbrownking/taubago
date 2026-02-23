@@ -6,16 +6,14 @@ import org.app.courseapp.dto.response.LessonDto;
 import org.app.courseapp.dto.response.RegistrationQuestionDto;
 import org.app.courseapp.dto.response.VideoDto;
 import org.app.courseapp.model.*;
-import org.app.courseapp.repository.CourseEnrollmentRepository;
-import org.app.courseapp.repository.CourseRepository;
-import org.app.courseapp.repository.CourseReviewRepository;
-import org.app.courseapp.repository.VideoProgressRepository;
+import org.app.courseapp.repository.*;
 import org.app.courseapp.service.impl.MinioService;
 import org.springframework.stereotype.Component;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 @Component
 @RequiredArgsConstructor
@@ -26,14 +24,20 @@ public class Mapper {
     private final CourseEnrollmentRepository enrollmentRepository;
     private final CourseReviewRepository reviewRepository;
     private final CourseRepository courseRepository;
+    private final LessonRepository lessonRepository;
 
     public CourseDto convertCourseToDto(Course course, Long userId) {
         boolean isEnrolled = false;
         boolean available = true;
         String unavailableReason = null;
+        long progress = 0;
 
         if (userId != null) {
             isEnrolled = enrollmentRepository.existsByUserIdAndCourseId(userId, course.getId());
+
+            if (isEnrolled) {
+                 progress = calculateCourseProgress(course.getId(), userId);
+            }
 
             List<CourseEnrollment> userEnrollments = enrollmentRepository.findByUserId(userId);
 
@@ -82,6 +86,7 @@ public class Mapper {
                 .id(course.getId())
                 .title(course.getTitle())
                 .description(course.getDescription())
+                .currentProgress(progress)
                 .durationDays(course.getDurationDays())
                 .createdByEmail(course.getCreatedBy() != null ? course.getCreatedBy().getEmail() : null)
                 .createdAt(course.getCreatedAt())
@@ -124,6 +129,8 @@ public class Mapper {
                 .id(video.getId())
                 .title(video.getTitle())
                 .type(video.getType())
+                .categoryId(video.getCategory() != null ? video.getCategory().getId() : null)
+                .categoryName(video.getCategory() != null ? video.getCategory().getName() : null)
                 .videoUrl(videoUrl)
                 .durationSeconds(video.getDurationSeconds())
                 .fileSizeBytes(video.getFileSizeBytes())
@@ -146,5 +153,34 @@ public class Mapper {
             result.add(convertRegistrationQuestionToDto(registrationQuestion));
         }
         return result;
+    }
+
+    private long calculateCourseProgress(Long courseId, Long userId) {
+        List<Lesson> lessons = lessonRepository.findByCourseIdOrderByDayNumber(courseId);
+        if (lessons.isEmpty()) {
+            return 0;
+        }
+
+        return lessons.stream()
+                .filter(lesson -> isLessonCompleted(lesson, userId))
+                .count();
+    }
+
+    private boolean isLessonCompleted(Lesson lesson, Long userId) {
+        List<Video> lessonVideos = lesson.getVideos();
+
+        if (lessonVideos.isEmpty()) {
+            return true;
+        }
+
+        return lessonVideos.stream()
+                .allMatch(video -> isVideoCompleted(video.getId(), userId));
+    }
+
+    private boolean isVideoCompleted(Long videoId, Long userId) {
+        Optional<VideoProgress> progress = videoProgressRepository
+                .findByUserIdAndVideoId(userId, videoId);
+
+        return progress.isPresent() && Boolean.TRUE.equals(progress.get().getIsCompleted());
     }
 }

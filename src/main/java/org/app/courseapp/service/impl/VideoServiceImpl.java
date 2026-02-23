@@ -4,8 +4,8 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.app.courseapp.config.minio.MinioProperties;
 import org.app.courseapp.dto.response.VideoDto;
-import org.app.courseapp.dto.response.UploadUrlResponse;
 import org.app.courseapp.model.*;
+import org.app.courseapp.model.users.Parent;
 import org.app.courseapp.model.users.User;
 import org.app.courseapp.repository.*;
 import org.app.courseapp.service.UserService;
@@ -17,18 +17,21 @@ import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
 import java.time.LocalDateTime;
-import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
 @Slf4j
 public class VideoServiceImpl implements VideoService {
 
+    private final CourseEnrollmentRepository enrollmentRepository;
     private final VideoRepository videoRepository;
     private final LessonRepository lessonRepository;
     private final VideoProgressRepository videoProgressRepository;
     private final VideoCategoryRepository categoryRepository;
+    private final ParentRepository parentRepository;
     private final MinioService minioService;
     private final MinioProperties minioProperties;
     private final UserService userService;
@@ -39,16 +42,25 @@ public class VideoServiceImpl implements VideoService {
     public List<VideoDto> getVideosByLesson(Long lessonId) {
         User currentUser = userService.getCurrentUser();
         List<Video> videos = videoRepository.findByLessonId(lessonId);
+
+        // Фильтруем видео по доступу для родителей
         return videos.stream()
+                .filter(video -> hasAccessToVideo(currentUser, video))
                 .map(video -> mapper.convertVideoToDto(video, currentUser.getId()))
                 .toList();
     }
+
     @Override
     @Transactional
     public void updateProgress(Long videoId, Long watchedSeconds) {
         User currentUser = userService.getCurrentUser();
         Video video = videoRepository.findById(videoId)
                 .orElseThrow(() -> new RuntimeException("Video not found"));
+
+        // Проверка доступа
+        if (!hasAccessToVideo(currentUser, video)) {
+            throw new RuntimeException("Access denied: You don't have access to this video category");
+        }
 
         VideoProgress progress = videoProgressRepository
                 .findByUserIdAndVideoId(currentUser.getId(), videoId)
@@ -76,6 +88,11 @@ public class VideoServiceImpl implements VideoService {
         Video video = videoRepository.findById(videoId)
                 .orElseThrow(() -> new RuntimeException("Video not found"));
 
+        // Проверка доступа
+        if (!hasAccessToVideo(currentUser, video)) {
+            throw new RuntimeException("Access denied: You don't have access to this video category");
+        }
+
         VideoProgress progress = videoProgressRepository
                 .findByUserIdAndVideoId(currentUser.getId(), videoId)
                 .orElse(new VideoProgress());
@@ -89,6 +106,7 @@ public class VideoServiceImpl implements VideoService {
         }
 
         videoProgressRepository.save(progress);
+        updateCourseProgress(currentUser.getId(), video.getLesson().getCourse().getId());
     }
 
     @Override
@@ -164,10 +182,71 @@ public class VideoServiceImpl implements VideoService {
         User currentUser = userService.getCurrentUser();
         VideoCategory category = categoryRepository.findById(categoryId)
                 .orElseThrow(() -> new RuntimeException("Category not found"));
+
+        // Проверка доступа родителя к этой категории
+        if (currentUser instanceof Parent) {
+            Parent parent = parentRepository.findById(currentUser.getId())
+                    .orElseThrow(() -> new RuntimeException("Parent not found"));
+
+            if (!parent.hasAccessToCategory(category)) {
+                throw new RuntimeException("Access denied: You don't have access to this video category");
+            }
+        }
+
         return videoRepository.findByLessonIdAndTypeAndCategory(lessonId, VideoType.LESSON, category)
                 .stream()
                 .map(video -> mapper.convertVideoToDto(video, currentUser.getId()))
                 .toList();
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public VideoDto getVideoById(Long videoId) {
+        User currentUser = userService.getCurrentUser();
+        Video video = videoRepository.findById(videoId)
+                .orElseThrow(() -> new RuntimeException("Video not found"));
+
+        // Проверка доступа
+        if (!hasAccessToVideo(currentUser, video)) {
+            throw new RuntimeException("Access denied: You don't have access to this video category");
+        }
+
+        return mapper.convertVideoToDto(video, currentUser.getId());
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public boolean hasAccessToVideo(Long videoId) {
+        User currentUser = userService.getCurrentUser();
+        Video video = videoRepository.findById(videoId)
+                .orElseThrow(() -> new RuntimeException("Video not found"));
+
+        return hasAccessToVideo(currentUser, video);
+    }
+
+    /**
+     * Проверка доступа пользователя к видео
+     */
+    private boolean hasAccessToVideo(User user, Video video) {
+        // Админы и кураторы имеют доступ ко всему
+        if (user.hasRole("ROLE_ADMIN") || user.hasRole("ROLE_CURATOR")) {
+            return true;
+        }
+
+        // Если у видео нет категории - доступ для всех
+        if (video.getCategory() == null) {
+            return true;
+        }
+
+        // Для родителей проверяем доступ к категории
+        if (user instanceof Parent) {
+            Parent parent = parentRepository.findById(user.getId())
+                    .orElseThrow(() -> new RuntimeException("Parent not found"));
+            return parent.hasAccessToCategory(video.getCategory());
+        }
+
+        // Для других ролей - запрет по умолчанию
+        return false;
     }
 
     private String generateObjectKey(Lesson lesson, VideoType type, String categoryName, String originalFilename) {
@@ -181,5 +260,51 @@ public class VideoServiceImpl implements VideoService {
         if (filename == null) return "mp4";
         int dotIndex = filename.lastIndexOf('.');
         return dotIndex > 0 ? filename.substring(dotIndex + 1) : "mp4";
+    }
+
+    private void updateCourseProgress(Long userId, Long courseId) {
+        CourseEnrollment enrollment = enrollmentRepository
+                .findByUserIdAndCourseId(userId, courseId)
+                .orElse(null);
+
+        if (enrollment != null) {
+            long newProgress = calculateCourseProgress(courseId, userId);
+            enrollment.setProgressPercentage(newProgress);
+
+            if (newProgress >= 100 && !Boolean.TRUE.equals(enrollment.isCompleted())) {
+                enrollment.setCompleted(true);
+                enrollment.setCompletedAt(LocalDateTime.now());
+                log.info("User {} completed course {}", userId, courseId);
+            }
+
+            enrollmentRepository.save(enrollment);
+        }
+    }
+    private int calculateCourseProgress(Long courseId, Long userId) {
+        List<Lesson> lessons = lessonRepository.findByCourseIdOrderByDayNumber(courseId);
+        if (lessons.isEmpty()) {
+            return 0;
+        }
+
+        long completedLessons = lessons.stream()
+                .filter(lesson -> isLessonCompleted(lesson, userId))
+                .count();
+
+        return (int) ((completedLessons * 100.0) / lessons.size());
+    }
+
+    private boolean isLessonCompleted(Lesson lesson, Long userId) {
+        List<Video> lessonVideos = lesson.getVideos();
+        if (lessonVideos.isEmpty()) {
+            return true;
+        }
+        return lessonVideos.stream()
+                .allMatch(video -> isVideoCompleted(video.getId(), userId));
+    }
+
+    private boolean isVideoCompleted(Long videoId, Long userId) {
+        Optional<VideoProgress> progress = videoProgressRepository
+                .findByUserIdAndVideoId(userId, videoId);
+        return progress.isPresent() && Boolean.TRUE.equals(progress.get().getIsCompleted());
     }
 }
