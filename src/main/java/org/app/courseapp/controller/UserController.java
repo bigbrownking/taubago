@@ -38,4 +38,10 @@ public class UserController {
         log.info("Updating profile for {}", email);
         return ResponseEntity.ok(userService.updateMyProfile(request));
     }
+
+    @DeleteMapping("/me")
+    public ResponseEntity<Void> deleteMyAccount() {
+        userService.deactivateMyAccount();
+        return ResponseEntity.noContent().build();
+    }
 }

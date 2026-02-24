@@ -13,6 +13,7 @@ import org.app.courseapp.repository.VideoCategoryRepository;
 import org.app.courseapp.repository.VideoRepository;
 import org.app.courseapp.service.ParentVideoAccessService;
 import org.app.courseapp.service.UserService;
+import org.app.courseapp.util.Mapper;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -29,6 +30,8 @@ public class ParentVideoAccessServiceImpl implements ParentVideoAccessService {
     private final VideoCategoryRepository videoCategoryRepository;
     private final VideoRepository videoRepository;
     private final UserService userService;
+
+    private final Mapper mapper;
 
     @Override
     @Transactional
@@ -104,7 +107,7 @@ public class ParentVideoAccessServiceImpl implements ParentVideoAccessService {
 
         return ParentVideoAccessDto.builder()
                 .parentId(parent.getId())
-                .parentName(parent.getName() + " " + parent.getSurname())
+                .parentName(mapper.resolveUserName(parent))
                 .parentEmail(parent.getEmail())
                 .allowedCategories(allowedCategoriesDto)
                 .allCategories(allCategoriesDto)

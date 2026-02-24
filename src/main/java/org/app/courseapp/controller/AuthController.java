@@ -24,7 +24,6 @@ import org.springframework.web.bind.annotation.*;
 public class AuthController {
     private final AuthService authService;
 
-
     @PostMapping("/signup")
     @Operation(summary = "Register a new user", description = "Creates a new user account with provided information")
     @ApiResponses(value = {

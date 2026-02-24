@@ -8,14 +8,18 @@ import org.app.courseapp.dto.response.userProfile.*;
 import org.app.courseapp.model.RegistrationAnswer;
 import org.app.courseapp.model.UserRole;
 import org.app.courseapp.model.users.*;
+import org.app.courseapp.repository.CourseEnrollmentRepository;
 import org.app.courseapp.repository.RegistrationAnswerRepository;
 import org.app.courseapp.repository.UserRepository;
+import org.app.courseapp.repository.VideoProgressRepository;
 import org.app.courseapp.service.UserService;
+import org.app.courseapp.util.Mapper;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -25,7 +29,7 @@ import java.util.stream.Collectors;
 public class UserServiceImpl implements UserService {
 
     private final UserRepository userRepository;
-    private final RegistrationAnswerRepository registrationAnswerRepository;
+    private final Mapper mapper;
     private final PasswordEncoder passwordEncoder;
 
     @Override
@@ -39,7 +43,7 @@ public class UserServiceImpl implements UserService {
     @Transactional(readOnly = true)
     public BaseUserProfileDto getMyProfile() {
         User currentUser = getCurrentUser();
-        return convertToProfileDto(currentUser);
+        return mapper.convertToProfileDto(currentUser);
     }
 
     @Override
@@ -47,7 +51,7 @@ public class UserServiceImpl implements UserService {
     public BaseUserProfileDto getUserProfile(String email) {
         User user = userRepository.findByEmail(email)
                 .orElseThrow(() -> new RuntimeException("User not found"));
-        return convertToProfileDto(user);
+        return mapper.convertToProfileDto(user);
     }
 
     @Override
@@ -96,93 +100,17 @@ public class UserServiceImpl implements UserService {
             log.info("Specialist profile updated: {}", specialist.getEmail());
         }
 
-        return convertToProfileDto(currentUser);
+        return mapper.convertToProfileDto(currentUser);
     }
 
-    // Helper method to convert User to appropriate DTO
-    private BaseUserProfileDto convertToProfileDto(User user) {
-        if (user instanceof Parent) {
-            return convertParentToDto((Parent) user);
-        } else if (user instanceof Administrator) {
-            return convertAdministratorToDto((Administrator) user);
-        } else if (user instanceof Specialist) {
-            return convertSpecialistToDto((Specialist) user);
-        }
-        throw new RuntimeException("Unknown user type");
-    }
-
-    private ParentProfileDto convertParentToDto(Parent parent) {
-        ParentProfileDto dto = new ParentProfileDto();
-        dto.setId(parent.getId());
-        dto.setEmail(parent.getEmail());
-        dto.setActive(parent.isActive());
-        dto.setCreatedDate(parent.getCreatedDate());
-        dto.setRoles(parent.getRoles().stream()
-                .map(role -> role.getName())
-                .collect(Collectors.toSet()));
-        dto.setUserType("PARENT");
-        dto.setName(parent.getName());
-        dto.setSurname(parent.getSurname());
-        dto.setPhoneNumber(parent.getPhoneNumber());
-        dto.setProfilePictureUrl(parent.getProfilePictureUrl());
-
-        // Children
-        List<ChildDto> children = parent.getChildren().stream()
-                .filter(Child::isActive)
-                .map(ChildDto::fromEntity)
-                .collect(Collectors.toList());
-        dto.setChildren(children);
-        dto.setTotalChildren(children.size());
-
-        // Registration stats
-        List<RegistrationAnswer> answers = registrationAnswerRepository.findByParentId(parent.getId());
-        if (!answers.isEmpty()) {
-            long positiveCount = answers.stream().filter(RegistrationAnswer::getAnswer).count();
-            long negativeCount = answers.size() - positiveCount;
-            double percentage = (positiveCount * 100.0) / answers.size();
-
-            ParentProfileDto.RegistrationStats stats = ParentProfileDto.RegistrationStats.builder()
-                    .totalQuestions(answers.size())
-                    .positiveAnswers((int) positiveCount)
-                    .negativeAnswers((int) negativeCount)
-                    .positivePercentage(Math.round(percentage * 10.0) / 10.0)
-                    .build();
-            dto.setRegistrationStats(stats);
-        }
-
-        return dto;
-    }
-
-    private AdministratorProfileDto convertAdministratorToDto(Administrator admin) {
-        AdministratorProfileDto dto = new AdministratorProfileDto();
-        dto.setId(admin.getId());
-        dto.setEmail(admin.getEmail());
-        dto.setActive(admin.isActive());
-        dto.setCreatedDate(admin.getCreatedDate());
-        dto.setRoles(admin.getRoles().stream()
-                .map(UserRole::getName)
-                .collect(Collectors.toSet()));
-        dto.setUserType("ADMINISTRATOR");
-        dto.setName(admin.getName());
-        dto.setSurname(admin.getSurname());
-        dto.setPhoneNumber(admin.getPhoneNumber());
-        return dto;
-    }
-
-    private SpecialistProfileDto convertSpecialistToDto(Specialist specialist) {
-        SpecialistProfileDto dto = new SpecialistProfileDto();
-        dto.setId(specialist.getId());
-        dto.setEmail(specialist.getEmail());
-        dto.setActive(specialist.isActive());
-        dto.setCreatedDate(specialist.getCreatedDate());
-        dto.setRoles(specialist.getRoles().stream()
-                .map(UserRole::getName)
-                .collect(Collectors.toSet()));
-        dto.setUserType("SPECIALIST");
-        dto.setName(specialist.getName());
-        dto.setSurname(specialist.getSurname());
-        dto.setSpecialization(specialist.getSpecialization());
-        dto.setPhoneNumber(specialist.getPhoneNumber());
-        return dto;
+    @Override
+    @Transactional
+    public void deactivateMyAccount() {
+        User currentUser = getCurrentUser();
+        currentUser.setActive(false);
+        currentUser.setDeleted(true);
+        currentUser.setDeletedAt(LocalDateTime.now());
+        userRepository.save(currentUser);
+        log.info("User account deleted: {}", currentUser.getId());
     }
 }

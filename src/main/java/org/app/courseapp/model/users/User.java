@@ -41,6 +41,13 @@ public class User {
     @Builder.Default
     private boolean active = true;
 
+    @Column(name = "deleted")
+    @Builder.Default
+    private boolean deleted = false;
+
+    @Column(name = "deleted_at")
+    private LocalDateTime deletedAt;
+
     @CreatedDate
     @Column(name = "created_date", updatable = false)
     private LocalDateTime createdDate;

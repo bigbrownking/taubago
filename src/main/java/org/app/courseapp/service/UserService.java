@@ -9,4 +9,5 @@ public interface UserService {
     BaseUserProfileDto getMyProfile();
     BaseUserProfileDto getUserProfile(String email);
     BaseUserProfileDto updateMyProfile(UpdateProfileRequest request);
+    void deactivateMyAccount();
 }

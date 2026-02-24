@@ -11,20 +11,12 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @AllArgsConstructor
 public class CourseRatingStatsDto {
-
     private Double averageRating;
-
     private Long totalRatings;
-
     private String formattedRating;
-
     private Long fiveStarCount;
-
     private Long fourStarCount;
-
     private Long threeStarCount;
-
     private Long twoStarCount;
-
     private Long oneStarCount;
 }

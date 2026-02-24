@@ -77,6 +77,7 @@ public class AuthServiceImpl implements AuthService {
                 .pincode(request.getPinCode() != null ?
                         passwordEncoder.encode(request.getPinCode()) : null)
                 .active(true)
+                .deleted(false)
                 .roles(new HashSet<>(){{add(parentRole);}})
                 .children(new HashSet<>())
                 .build();
@@ -130,6 +131,9 @@ public class AuthServiceImpl implements AuthService {
         User user = userRepository.findByEmail(request.getEmail())
                 .orElseThrow(() -> new RuntimeException("User not found"));
 
+        if (!user.isActive()) {
+            throw new RuntimeException("Account is deactivated");
+        }
         boolean authenticated = false;
         String authType = null;
 

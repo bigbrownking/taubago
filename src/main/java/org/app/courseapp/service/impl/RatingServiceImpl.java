@@ -15,6 +15,7 @@ import org.app.courseapp.model.users.User;
 import org.app.courseapp.repository.*;
 import org.app.courseapp.service.RatingService;
 import org.app.courseapp.service.UserService;
+import org.app.courseapp.util.Mapper;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
@@ -34,6 +35,8 @@ public class RatingServiceImpl implements RatingService {
     private final ReviewLikeRepository reviewLikeRepository;
     private final CourseRepository courseRepository;
     private final UserService userService;
+
+    private final Mapper mapper;
 
     @Override
     @Transactional
@@ -111,7 +114,7 @@ public class RatingServiceImpl implements RatingService {
         }
 
         review = reviewRepository.save(review);
-        return convertToReviewDto(review, currentUser.getId());
+        return mapper.convertToReviewDto(review, currentUser.getId());
     }
 
     @Override
@@ -165,7 +168,7 @@ public class RatingServiceImpl implements RatingService {
         Page<CourseReview> reviews = reviewRepository
                 .findByCourseIdAndReviewTextIsNotNullOrderByLikeCountDescCreatedAtDesc(courseId, pageable);
 
-        return reviews.map(review -> convertToReviewDto(review, userId));
+        return reviews.map(review -> mapper.convertToReviewDto(review, userId));
     }
 
     @Override
@@ -184,7 +187,7 @@ public class RatingServiceImpl implements RatingService {
         Page<CourseReview> reviews = reviewRepository
                 .findAllByReviewTextIsNotNullOrderByLikeCountDescCreatedAtDesc(pageable);
 
-        return reviews.map(review -> convertToReviewDto(review, userId));
+        return reviews.map(review -> mapper.convertToReviewDto(review, userId));
     }
 
     @Override
@@ -292,46 +295,5 @@ public class RatingServiceImpl implements RatingService {
         } catch (Exception e) {
             return false;
         }
-    }
-
-    private ReviewDto convertToReviewDto(CourseReview review, Long currentUserId) {
-        boolean likedByCurrentUser = false;
-        if (currentUserId != null) {
-            likedByCurrentUser = reviewLikeRepository
-                    .existsByUserIdAndReviewId(currentUserId, review.getId());
-        }
-
-        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd MMM yyyy", Locale.forLanguageTag("ru"));
-        String formattedDate = review.getCreatedAt().format(formatter);
-
-        String userName = getUserDisplayName(review.getUser());
-
-        return ReviewDto.builder()
-                .id(review.getId())
-                .userId(review.getUser().getId())
-                .userName(userName)
-                .courseId(review.getCourse().getId())
-                .courseTitle(review.getCourse().getTitle())
-                .rating(review.getRating())
-                .reviewText(review.getReviewText())
-                .likeCount(review.getLikeCount())
-                .likedByCurrentUser(likedByCurrentUser)
-                .createdAt(review.getCreatedAt())
-                .formattedDate(formattedDate)
-                .build();
-    }
-
-    private String getUserDisplayName(User user) {
-        if (user instanceof Parent) {
-            Parent parent = (Parent) user;
-            return parent.getName() + " " + parent.getSurname();
-        } else if (user instanceof Administrator) {
-            Administrator admin = (Administrator) user;
-            return admin.getName() + " " + admin.getSurname();
-        } else if (user instanceof Specialist) {
-            Specialist specialist = (Specialist) user;
-            return specialist.getName() + " " + specialist.getSurname();
-        }
-        return user.getEmail();
     }
 }

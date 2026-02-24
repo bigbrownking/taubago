@@ -10,16 +10,10 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @AllArgsConstructor
 public class CourseReviewDto {
-
     private Long courseId;
-
     private String title;
-
     private Double averageRating;
-
     private String formattedRating;
-
     private Long reviewCount;
-
     private String colorCode;
 }

@@ -15,6 +15,7 @@ import org.app.courseapp.model.users.Parent;
 import org.app.courseapp.model.users.User;
 import org.app.courseapp.repository.LessonReportRepository;
 import org.app.courseapp.repository.LessonRepository;
+import org.app.courseapp.repository.UserRepository;
 import org.app.courseapp.repository.VideoRepository;
 import org.app.courseapp.service.LessonReportService;
 import org.app.courseapp.service.UserService;
@@ -31,6 +32,7 @@ import java.util.List;
 @Slf4j
 public class LessonReportServiceImpl implements LessonReportService {
 
+    private final UserRepository userRepository;
     private final LessonReportRepository reportRepository;
     private final LessonRepository lessonRepository;
     private final UserService userService;
@@ -141,7 +143,7 @@ public class LessonReportServiceImpl implements LessonReportService {
 
         // Инфо о родителе (для куратора)
         if (report.getParent() instanceof Parent parent) {
-            dto.setParentName(parent.getName() + " " + parent.getSurname());
+            dto.setParentName(mapper.resolveUserName(parent));
             dto.setParentEmail(parent.getEmail());
         }
 
@@ -162,7 +164,7 @@ public class LessonReportServiceImpl implements LessonReportService {
                     dto.setCreatedAt(report.getCreatedAt());
 
                     if (report.getParent() instanceof Parent parent) {
-                        dto.setParentName(parent.getName());
+                        dto.setParentName(mapper.resolveUserName(parent));
                     }
                     return dto;
                 })
@@ -196,10 +198,10 @@ public class LessonReportServiceImpl implements LessonReportService {
                 .map(v -> mapper.convertVideoToDto(v, report.getParent().getId()))
                 .toList();
 
-        String parentName = "";
-        if (report.getParent() instanceof Parent parent) {
-            parentName = parent.getName() + " " + parent.getSurname();
-        }
+        User parent = report.getParent();
+        User realParent = userRepository.findById(parent.getId()).orElse(parent);
+        String parentName = mapper.resolveUserName(realParent);
+
 
         return ParentLessonReportFullDto.builder()
                 .parentId(report.getParent().getId())

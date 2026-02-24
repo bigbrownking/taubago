@@ -17,4 +17,6 @@ public class LessonDto {
     private String description;
     private Integer dayNumber;
     private List<VideoDto> videos;
+    private Boolean isCompleted;
+
 }
