@@ -14,6 +14,8 @@ services:
     ports:
       - "5432:5432"
     restart: always
+    networks:
+      - course_network
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U ${DATABASE_USERNAME} -d ${DATABASE_NAME:-coursedb}"]
       interval: 10s
@@ -29,11 +31,16 @@ services:
       - .env
     environment:
       DATABASE_URL: jdbc:postgresql://postgres:5432/${DATABASE_NAME:-coursedb}
+      MINIO_URL: http://minio:9000          # внутренний — для upload/delete
+      MINIO_PUBLIC_URL: http://localhost:9000  # внешний — для presigned URL фронту
     depends_on:
       postgres:
         condition: service_healthy
+      minio:
+        condition: service_healthy
     restart: always
-
+    networks:
+      - course_network
 
   minio:
     image: minio/minio
@@ -47,8 +54,10 @@ services:
     volumes:
       - minio_data:/data
     command: server /data --console-address ":9001"
+    networks:
+      - course_network
     healthcheck:
-      test: [ "CMD", "curl", "-f", "http://localhost:9000/minio/health/live" ]
+      test: ["CMD", "curl", "-f", "http://localhost:9000/minio/health/live"]
       interval: 30s
       timeout: 20s
       retries: 3
@@ -58,3 +67,7 @@ volumes:
     driver: local
   minio_data:
     driver: local
+
+networks:
+  course_network:
+    driver: bridge
