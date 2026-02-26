@@ -38,4 +38,10 @@ public class Lesson {
 
     @OneToMany(mappedBy = "lesson", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<LessonReport> reports = new ArrayList<>();
+
+    public List<Video> getLessonVideos() {
+        return videos.stream()
+                .filter(video -> video.getType() == VideoType.LESSON)
+                .toList();
+    }
 }

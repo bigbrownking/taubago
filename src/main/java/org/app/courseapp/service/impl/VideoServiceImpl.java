@@ -10,6 +10,7 @@ import org.app.courseapp.model.users.User;
 import org.app.courseapp.repository.*;
 import org.app.courseapp.service.UserService;
 import org.app.courseapp.service.VideoService;
+import org.app.courseapp.util.CompletionChecker;
 import org.app.courseapp.util.Mapper;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -37,6 +38,8 @@ public class VideoServiceImpl implements VideoService {
     private final MinioProperties minioProperties;
     private final UserService userService;
     private final Mapper mapper;
+
+    private final CompletionChecker completionChecker;
 
     @Override
     @Transactional(readOnly = true)
@@ -298,24 +301,11 @@ public class VideoServiceImpl implements VideoService {
         }
 
         long completedLessons = lessons.stream()
-                .filter(lesson -> isLessonCompleted(lesson, userId))
+                .filter(lesson -> completionChecker.isLessonCompleted(lesson, userId))
                 .count();
 
         return (int) ((completedLessons * 100.0) / lessons.size());
     }
 
-    private boolean isLessonCompleted(Lesson lesson, Long userId) {
-        List<Video> lessonVideos = lesson.getVideos();
-        if (lessonVideos.isEmpty()) {
-            return true;
-        }
-        return lessonVideos.stream()
-                .allMatch(video -> isVideoCompleted(video.getId(), userId));
-    }
 
-    private boolean isVideoCompleted(Long videoId, Long userId) {
-        Optional<VideoProgress> progress = videoProgressRepository
-                .findByUserIdAndVideoId(userId, videoId);
-        return progress.isPresent() && Boolean.TRUE.equals(progress.get().getIsCompleted());
-    }
 }

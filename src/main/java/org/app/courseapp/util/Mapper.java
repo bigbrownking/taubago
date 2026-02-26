@@ -30,6 +30,8 @@ public class Mapper {
     private final RegistrationAnswerRepository registrationAnswerRepository;
     private final ReviewLikeRepository reviewLikeRepository;
 
+    private final CompletionChecker completionChecker;
+
     public CourseDto convertCourseToDto(Course course, Long userId) {
         boolean isEnrolled = false;
         boolean available = true;
@@ -110,8 +112,9 @@ public class Mapper {
                 .build();
     }
     public LessonDto convertLessonToDto(Lesson lesson, Long userId) {
-        boolean isCompleted = !lesson.getVideos().isEmpty() &&
-                lesson.getVideos().stream()
+        List<Video> lessonVideos = lesson.getLessonVideos();
+        boolean isCompleted = !lessonVideos.isEmpty() &&
+                lessonVideos.stream()
                         .allMatch(video -> {
                             Optional<VideoProgress> progress = videoProgressRepository
                                     .findByUserIdAndVideoId(userId, video.getId());
@@ -124,7 +127,7 @@ public class Mapper {
                 .description(lesson.getDescription())
                 .dayNumber(lesson.getDayNumber())
                 .isCompleted(isCompleted)
-                .videos(lesson.getVideos().stream()
+                .videos(lessonVideos.stream()
                         .map(video -> convertVideoToDto(video, userId))
                         .toList())
                 .build();
@@ -174,26 +177,8 @@ public class Mapper {
         }
 
         return lessons.stream()
-                .filter(lesson -> isLessonCompleted(lesson, userId))
+                .filter(lesson -> completionChecker.isLessonCompleted(lesson, userId))
                 .count();
-    }
-
-    private boolean isLessonCompleted(Lesson lesson, Long userId) {
-        List<Video> lessonVideos = lesson.getVideos();
-
-        if (lessonVideos.isEmpty()) {
-            return true;
-        }
-
-        return lessonVideos.stream()
-                .allMatch(video -> isVideoCompleted(video.getId(), userId));
-    }
-
-    private boolean isVideoCompleted(Long videoId, Long userId) {
-        Optional<VideoProgress> progress = videoProgressRepository
-                .findByUserIdAndVideoId(userId, videoId);
-
-        return progress.isPresent() && Boolean.TRUE.equals(progress.get().getIsCompleted());
     }
     public BaseUserProfileDto convertToProfileDto(User user) {
         if (user instanceof Parent) {

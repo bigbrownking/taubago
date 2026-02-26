@@ -38,7 +38,7 @@ public class LessonController {
         return ResponseEntity.ok(lessonService.getLessonById(lessonId));
     }
     @PostMapping(value = "/{lessonId}/report", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
-    @PreAuthorize("hasRole('PARENT')")
+    //@PreAuthorize("hasRole('PARENT')")
     public ResponseEntity<LessonReportDto> submitReport(
             @PathVariable Long lessonId,
             @RequestParam("childReactionRating") @Min(1) @Max(5) Integer childReactionRating,
