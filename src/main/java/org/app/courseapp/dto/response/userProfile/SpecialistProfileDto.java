@@ -1,6 +1,9 @@
 package org.app.courseapp.dto.response.userProfile;
 
 import lombok.*;
+import org.app.courseapp.model.Specialization;
+
+import java.util.List;
 
 @Getter
 @Setter
@@ -9,7 +12,7 @@ import lombok.*;
 public class SpecialistProfileDto extends BaseUserProfileDto {
     private String name;
     private String surname;
-    private String specialization;
+    private List<Specialization> specialization;
     private String phoneNumber;
     private String profilePictureUrl;
 }

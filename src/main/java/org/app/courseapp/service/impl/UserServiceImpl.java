@@ -6,12 +6,10 @@ import org.app.courseapp.dto.request.UpdateProfileRequest;
 import org.app.courseapp.dto.response.*;
 import org.app.courseapp.dto.response.userProfile.*;
 import org.app.courseapp.model.RegistrationAnswer;
+import org.app.courseapp.model.Specialization;
 import org.app.courseapp.model.UserRole;
 import org.app.courseapp.model.users.*;
-import org.app.courseapp.repository.CourseEnrollmentRepository;
-import org.app.courseapp.repository.RegistrationAnswerRepository;
-import org.app.courseapp.repository.UserRepository;
-import org.app.courseapp.repository.VideoProgressRepository;
+import org.app.courseapp.repository.*;
 import org.app.courseapp.service.UserService;
 import org.app.courseapp.util.Mapper;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -29,6 +27,7 @@ import java.util.stream.Collectors;
 public class UserServiceImpl implements UserService {
 
     private final UserRepository userRepository;
+    private final SpecializationRepository specializationRepository;
     private final Mapper mapper;
     private final PasswordEncoder passwordEncoder;
 
@@ -59,8 +58,7 @@ public class UserServiceImpl implements UserService {
     public BaseUserProfileDto updateMyProfile(UpdateProfileRequest request) {
         User currentUser = getCurrentUser();
 
-        if (currentUser instanceof Parent) {
-            Parent parent = (Parent) currentUser;
+        if (currentUser instanceof Parent parent) {
             parent.setName(request.getName());
             parent.setSurname(request.getSurname());
             parent.setPhoneNumber(request.getPhoneNumber());
@@ -72,8 +70,7 @@ public class UserServiceImpl implements UserService {
             userRepository.save(parent);
             log.info("Parent profile updated: {}", parent.getEmail());
 
-        } else if (currentUser instanceof Administrator) {
-            Administrator admin = (Administrator) currentUser;
+        } else if (currentUser instanceof Administrator admin) {
             admin.setName(request.getName());
             admin.setSurname(request.getSurname());
             admin.setPhoneNumber(request.getPhoneNumber());
@@ -85,12 +82,15 @@ public class UserServiceImpl implements UserService {
             userRepository.save(admin);
             log.info("Administrator profile updated: {}", admin.getEmail());
 
-        } else if (currentUser instanceof Specialist) {
-            Specialist specialist = (Specialist) currentUser;
+        } else if (currentUser instanceof Specialist specialist) {
+            if (request.getSpecializations() != null || !request.getSpecializations().isEmpty()) {
+                List<Specialization> specializations = specializationRepository.findAllById(request.getSpecializations());
+                specialist.setSpecializations(specializations);
+            }
+
             specialist.setName(request.getName());
             specialist.setSurname(request.getSurname());
             specialist.setPhoneNumber(request.getPhoneNumber());
-            specialist.setSpecialization(request.getSpecialization());
 
             if (request.getPassword() != null && !request.getPassword().isBlank()) {
                 specialist.setPassword(passwordEncoder.encode(request.getPassword()));

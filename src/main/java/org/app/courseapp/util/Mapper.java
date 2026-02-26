@@ -271,7 +271,7 @@ public class Mapper {
         dto.setUserType("SPECIALIST");
         dto.setName(specialist.getName());
         dto.setSurname(specialist.getSurname());
-        dto.setSpecialization(specialist.getSpecialization());
+        dto.setSpecialization(specialist.getSpecializations());
         dto.setPhoneNumber(specialist.getPhoneNumber());
         return dto;
     }
@@ -313,5 +313,25 @@ public class Mapper {
                 .createdAt(review.getCreatedAt())
                 .formattedDate(formattedDate)
                 .build();
+    }
+
+    public LessonReportDto convertToLessonReportDto(LessonReport report) {
+        LessonReportDto dto = new LessonReportDto();
+        dto.setId(report.getId());
+        dto.setLessonId(report.getLesson().getId());
+        dto.setLessonTitle(report.getLesson().getTitle());
+        dto.setDayNumber(report.getLesson().getDayNumber());
+        dto.setChildReactionRating(report.getChildReactionRating());
+        dto.setComment(report.getComment());
+        dto.setCreatedAt(report.getCreatedAt());
+        dto.setUpdatedAt(report.getUpdatedAt());
+
+        // Инфо о родителе (для куратора)
+        if (report.getParent() instanceof Parent parent) {
+            dto.setParentName(resolveUserName(parent));
+            dto.setParentEmail(parent.getEmail());
+        }
+
+        return dto;
     }
 }

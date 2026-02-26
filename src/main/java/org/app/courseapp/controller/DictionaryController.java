@@ -4,10 +4,12 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import org.app.courseapp.dto.response.RegistrationQuestionDto;
 import org.app.courseapp.model.Diagnosis;
+import org.app.courseapp.model.Specialization;
 import org.app.courseapp.model.VideoCategory;
 import org.app.courseapp.repository.RegistrationQuestionRepository;
 import org.app.courseapp.service.DiagnosisService;
 import org.app.courseapp.service.RegistrationQuestionService;
+import org.app.courseapp.service.SpecializationService;
 import org.app.courseapp.service.VideoCategoryService;
 import org.app.courseapp.util.Mapper;
 import org.springframework.http.ResponseEntity;
@@ -25,6 +27,7 @@ public class DictionaryController {
     private final VideoCategoryService videoCategoryService;
     private final RegistrationQuestionService registrationQuestionService;
     private final DiagnosisService diagnosisService;
+    private final SpecializationService specializationService;
 
     @GetMapping("/questions")
     public ResponseEntity<List<RegistrationQuestionDto>> getRegistrationQuestions() {
@@ -40,6 +43,8 @@ public class DictionaryController {
         return ResponseEntity.ok(diagnosisService.getAll());
     }
 
-
-
+    @GetMapping("/specializations")
+    public ResponseEntity<List<Specialization>> getSpecializations() {
+        return ResponseEntity.ok(specializationService.getAll());
+    }
 }

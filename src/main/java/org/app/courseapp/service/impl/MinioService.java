@@ -19,13 +19,37 @@ public class MinioService {
     private final MinioClient minioClient;
     private final MinioProperties minioProperties;
 
+    private MinioClient publicMinioClient;
+
     @PostConstruct
     public void init() {
         try {
             createBucketIfNotExists();
+
+            publicMinioClient = MinioClient.builder()
+                    .endpoint(minioProperties.getPublicUrl())
+                    .credentials(minioProperties.getAccessKey(), minioProperties.getSecretKey())
+                    .build();
+
             log.info("MinIO initialized successfully");
         } catch (Exception e) {
             log.error("Failed to initialize MinIO", e);
+        }
+    }
+
+    public String getPresignedUrl(String objectKey, int expiryHours) {
+        try {
+            return publicMinioClient.getPresignedObjectUrl(  // <-- publicMinioClient
+                    GetPresignedObjectUrlArgs.builder()
+                            .method(Method.GET)
+                            .bucket(minioProperties.getBucket())
+                            .object(objectKey)
+                            .expiry(expiryHours, TimeUnit.HOURS)
+                            .build()
+            );
+        } catch (Exception e) {
+            log.error("Failed to generate presigned URL for: {}", objectKey, e);
+            throw new RuntimeException("Failed to generate URL", e);
         }
     }
 
@@ -60,38 +84,6 @@ public class MinioService {
         } catch (Exception e) {
             log.error("Failed to upload file: {}", objectKey, e);
             throw new RuntimeException("Failed to upload file", e);
-        }
-    }
-
-    public String getPresignedUrl(String objectKey, int expiryHours) {
-        try {
-            return minioClient.getPresignedObjectUrl(
-                    GetPresignedObjectUrlArgs.builder()
-                            .method(Method.GET)
-                            .bucket(minioProperties.getBucket())
-                            .object(objectKey)
-                            .expiry(expiryHours, TimeUnit.HOURS)
-                            .build()
-            );
-        } catch (Exception e) {
-            log.error("Failed to generate presigned URL for: {}", objectKey, e);
-            throw new RuntimeException("Failed to generate URL", e);
-        }
-    }
-
-    public String getPresignedUploadUrl(String objectKey, int expiryMinutes) {
-        try {
-            return minioClient.getPresignedObjectUrl(
-                    GetPresignedObjectUrlArgs.builder()
-                            .method(Method.PUT)
-                            .bucket(minioProperties.getBucket())
-                            .object(objectKey)
-                            .expiry(expiryMinutes, TimeUnit.MINUTES)
-                            .build()
-            );
-        } catch (Exception e) {
-            log.error("Failed to generate presigned upload URL for: {}", objectKey, e);
-            throw new RuntimeException("Failed to generate upload URL", e);
         }
     }
 

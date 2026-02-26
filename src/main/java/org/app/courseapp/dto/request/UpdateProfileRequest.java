@@ -5,6 +5,8 @@ import jakarta.validation.constraints.*;
 import lombok.Getter;
 import lombok.Setter;
 
+import java.util.List;
+
 @Getter
 @Setter
 public class UpdateProfileRequest {
@@ -33,5 +35,5 @@ public class UpdateProfileRequest {
     private String password;
 
     @Nullable
-    private String specialization;
+    private List<Long> specializations;
 }

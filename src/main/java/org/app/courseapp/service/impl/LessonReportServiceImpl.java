@@ -103,7 +103,7 @@ public class LessonReportServiceImpl implements LessonReportService {
                 currentUser.getEmail(), lessonId,
                 videos != null ? videos.size() : 0);
 
-        return convertToDto(report);
+        return mapper.convertToLessonReportDto(report);
     }
 
     private String getFileExtension(String filename) {
@@ -119,35 +119,15 @@ public class LessonReportServiceImpl implements LessonReportService {
         LessonReport report = reportRepository
                 .findByLessonIdAndParentId(lessonId, currentUser.getId())
                 .orElseThrow(() -> new RuntimeException("Report not found"));
-        return convertToDto(report);
+        return mapper.convertToLessonReportDto(report);
     }
     @Override
     @Transactional(readOnly = true)
     public List<LessonReportDto> getMyAllReports() {
         User currentUser = userService.getCurrentUser();
         return reportRepository.findByParentId(currentUser.getId()).stream()
-                .map(this::convertToDto)
+                .map(mapper::convertToLessonReportDto)
                 .toList();
-    }
-
-    private LessonReportDto convertToDto(LessonReport report) {
-        LessonReportDto dto = new LessonReportDto();
-        dto.setId(report.getId());
-        dto.setLessonId(report.getLesson().getId());
-        dto.setLessonTitle(report.getLesson().getTitle());
-        dto.setDayNumber(report.getLesson().getDayNumber());
-        dto.setChildReactionRating(report.getChildReactionRating());
-        dto.setComment(report.getComment());
-        dto.setCreatedAt(report.getCreatedAt());
-        dto.setUpdatedAt(report.getUpdatedAt());
-
-        // Инфо о родителе (для куратора)
-        if (report.getParent() instanceof Parent parent) {
-            dto.setParentName(mapper.resolveUserName(parent));
-            dto.setParentEmail(parent.getEmail());
-        }
-
-        return dto;
     }
 
     @Override

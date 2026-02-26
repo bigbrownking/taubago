@@ -1,13 +1,12 @@
 package org.app.courseapp.model.users;
 
-import jakarta.persistence.Column;
-import jakarta.persistence.Entity;
-import jakarta.persistence.Table;
-import lombok.AllArgsConstructor;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
+import jakarta.persistence.*;
+import lombok.*;
 import lombok.experimental.SuperBuilder;
+import org.app.courseapp.model.Specialization;
+
+import java.util.ArrayList;
+import java.util.List;
 
 @Entity
 @Table(name = "specialists")
@@ -24,8 +23,14 @@ public class Specialist extends User {
     @Column(name = "surname", nullable = false)
     private String surname;
 
-    @Column(name = "specialization")
-    private String specialization;
+    @Builder.Default
+    @ManyToMany(fetch = FetchType.LAZY)
+    @JoinTable(
+            name = "specialist_specializations",
+            joinColumns = @JoinColumn(name = "specialist_id"),
+            inverseJoinColumns = @JoinColumn(name = "specialization_id")
+    )
+    private List<Specialization> specializations = new ArrayList<>();
 
     @Column(name = "phone_number")
     private String phoneNumber;
