@@ -62,7 +62,7 @@ public class DataInitializer implements CommandLineRunner {
                 });
     }
     private void createCuratorIfNotExists(UserRole curatorRole) {
-        String curatorEmail = "curator@gmail.com";
+        String curatorEmail = "curator2@gmail.com";
 
         if (!userRepository.existsByEmail(curatorEmail)) {
             Curator curator = Curator.builder()
