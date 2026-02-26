@@ -17,6 +17,7 @@ import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
@@ -139,9 +140,9 @@ public class VideoServiceImpl implements VideoService {
 
     @Override
     @Transactional
-    public VideoDto uploadLessonVideo(
+    public List<VideoDto> uploadLessonVideo(
             Long lessonId,
-            MultipartFile file,
+            List<MultipartFile> files,
             String title,
             Long categoryId
     ) throws IOException {
@@ -157,23 +158,33 @@ public class VideoServiceImpl implements VideoService {
         VideoCategory category = categoryRepository.findById(categoryId)
                 .orElseThrow(() -> new RuntimeException("Category not found"));
 
-        String objectKey = generateObjectKey(lesson, VideoType.LESSON, category.getName(), file.getOriginalFilename());
+        List<Video> videos = new ArrayList<>();
 
-        minioService.uploadFile(objectKey, file.getInputStream(), file.getContentType(), file.getSize());
+        for (MultipartFile file : files) {
+            String objectKey = generateObjectKey(lesson, VideoType.LESSON, category.getName(), file.getOriginalFilename());
 
-        Video video = videoRepository.save(Video.builder()
-                .title(title)
-                .type(VideoType.LESSON)
-                .category(category)
-                .objectKey(objectKey)
-                .bucketName(minioProperties.getBucket())
-                .fileSizeBytes(file.getSize())
-                .contentType(file.getContentType())
-                .lesson(lesson)
-                .uploadedBy(currentUser)
-                .build());
+            minioService.uploadFile(objectKey, file.getInputStream(), file.getContentType(), file.getSize());
 
-        return mapper.convertVideoToDto(video, currentUser.getId());
+            Video video = Video.builder()
+                    .title(title)
+                    .type(VideoType.LESSON)
+                    .category(category)
+                    .objectKey(objectKey)
+                    .bucketName(minioProperties.getBucket())
+                    .fileSizeBytes(file.getSize())
+                    .contentType(file.getContentType())
+                    .lesson(lesson)
+                    .uploadedBy(currentUser)
+                    .build();
+
+            videos.add(video);
+        }
+
+        videoRepository.saveAll(videos);
+
+        return videos.stream()
+                .map(v -> mapper.convertVideoToDto(v, currentUser.getId()))
+                .toList();
     }
 
     @Override

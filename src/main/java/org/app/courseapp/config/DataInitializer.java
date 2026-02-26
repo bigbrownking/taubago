@@ -38,7 +38,9 @@ public class DataInitializer implements CommandLineRunner {
         UserRole roleSpecialist = createRoleIfNotExists("ROLE_SPECIALIST");
         UserRole roleCurator = createRoleIfNotExists("ROLE_CURATOR");
 
-        createAdminIfNotExists(roleAdmin);
+        createAdminIfNotExists(roleAdmin, 1);
+        createAdminIfNotExists(roleAdmin, 2);
+
         createParentIfNotExists(roleParent);
         createCuratorIfNotExists(roleCurator);
 
@@ -103,8 +105,8 @@ public class DataInitializer implements CommandLineRunner {
             log.debug("ℹ️  Parent user already exists");
         }
     }
-    private void createAdminIfNotExists(UserRole adminRole) {
-        String adminEmail = "admin@gmail.com";
+    private void createAdminIfNotExists(UserRole adminRole, int index) {
+        String adminEmail = "admin" + index +"@gmail.com";
 
         if (!userRepository.existsByEmail(adminEmail)) {
             Administrator admin = Administrator.builder()

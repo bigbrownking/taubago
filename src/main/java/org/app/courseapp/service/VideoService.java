@@ -15,5 +15,5 @@ public interface VideoService {
     void deleteVideo(Long videoId);
     List<VideoDto> getLessonVideosByCategory(Long lessonId, Long categoryId);
     List<VideoDto> getMyHomeworkVideos(Long lessonId);
-    VideoDto uploadLessonVideo(Long lessonId, MultipartFile file, String title, Long categoryId) throws IOException;
+    List<VideoDto> uploadLessonVideo(Long lessonId, List<MultipartFile> file, String title, Long categoryId) throws IOException;
 }

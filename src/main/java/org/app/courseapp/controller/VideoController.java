@@ -132,16 +132,15 @@ public class VideoController {
         return new ResponseEntity<>(data, headers, HttpStatus.PARTIAL_CONTENT);
     }
 
-    @PostMapping("/lesson/{lessonId}/upload")
+    @PostMapping(value = "/lesson/{lessonId}/upload", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     @PreAuthorize("hasRole('ADMIN')")
-    @Operation(summary = "Upload lesson video", description = "Upload a new video to a lesson (admin only)")
-    public ResponseEntity<VideoDto> uploadLessonVideo(
+    public ResponseEntity<List<VideoDto>> uploadLessonVideo(
             @PathVariable Long lessonId,
-            @RequestParam("file") MultipartFile file,
+            @RequestParam("file") List<MultipartFile> files,
             @RequestParam("title") String title,
             @RequestParam("categoryId") Long categoryId
     ) throws IOException {
-        return ResponseEntity.ok(videoService.uploadLessonVideo(lessonId, file, title, categoryId));
+        return ResponseEntity.ok(videoService.uploadLessonVideo(lessonId, files, title, categoryId));
     }
 
     @GetMapping("/lesson/{lessonId}/category/{categoryId}")

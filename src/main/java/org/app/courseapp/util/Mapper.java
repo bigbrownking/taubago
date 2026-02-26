@@ -96,6 +96,8 @@ public class Mapper {
                 .createdAt(course.getCreatedAt())
                 .updatedAt(course.getUpdatedAt())
                 .isEnrolled(isEnrolled)
+                .isCompleted(Boolean.TRUE.equals(enrollmentRepository.findByUserIdAndCourseId(userId, course.getId())
+                        .map(CourseEnrollment::isCompleted).orElse(false)))
                 .keywords(course.getKeywords())
                 .averageRating(averageRating)
                 .totalRatings(totalRatings)

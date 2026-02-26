@@ -23,6 +23,7 @@ public class CourseDto {
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
     private Boolean isEnrolled;
+    private Boolean isCompleted;
     private List<String> keywords;
 
     // NEW: Rating fields
