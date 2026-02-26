@@ -51,7 +51,7 @@ public class LessonServiceImpl implements LessonService {
         CourseEnrollment activeEnrollment = courseEnrollmentRepository
                 .findByUserId(currentUser.getId())
                 .stream()
-                .filter(e -> !Boolean.TRUE.equals(e.isCompleted()))
+                .filter(e -> !Boolean.TRUE.equals(e.getCompleted()))
                 .filter(e -> e.getCourse().getId().equals(courseId))
                 .findFirst().orElseThrow(() -> new RuntimeException("No active enrollment found for this course"));
 

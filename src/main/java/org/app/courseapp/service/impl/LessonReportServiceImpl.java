@@ -67,7 +67,7 @@ public class LessonReportServiceImpl implements LessonReportService {
 
         if (videos != null && !videos.isEmpty()) {
             for (MultipartFile file : videos) {
-                String objectKey = String.format(
+                String rawKey = String.format(
                         "courses/%d/lessons/%d/homework/user_%d_%d.%s",
                         lesson.getCourse().getId(),
                         lesson.getId(),
@@ -75,6 +75,7 @@ public class LessonReportServiceImpl implements LessonReportService {
                         System.currentTimeMillis(),
                         getFileExtension(file.getOriginalFilename())
                 );
+                String objectKey = minioService.sanitizeObjectKey(rawKey);
 
                 minioService.uploadFile(
                         objectKey,

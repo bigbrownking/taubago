@@ -131,7 +131,7 @@ public class AuthServiceImpl implements AuthService {
         User user = userRepository.findByEmail(request.getEmail())
                 .orElseThrow(() -> new RuntimeException("User not found"));
 
-        if (!user.isActive()) {
+        if (!user.getActive()) {
             throw new RuntimeException("Account is deactivated");
         }
         boolean authenticated = false;

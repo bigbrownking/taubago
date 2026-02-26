@@ -39,11 +39,11 @@ public class User {
 
     @Column(nullable = false)
     @Builder.Default
-    private boolean active = true;
+    private Boolean active = true;
 
-    @Column(name = "deleted")
+    @Column(name = "deleted", nullable = false)
     @Builder.Default
-    private boolean deleted = false;
+    private Boolean deleted = false;
 
     @Column(name = "deleted_at")
     private LocalDateTime deletedAt;

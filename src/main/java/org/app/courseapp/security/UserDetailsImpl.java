@@ -17,7 +17,7 @@ public class UserDetailsImpl implements UserDetails {
     private Long id;
     private String username;
     private String password;
-    private boolean active;
+    private Boolean active;
     private Collection<? extends GrantedAuthority> authorities;
 
     public static UserDetailsImpl build(User user) {
@@ -29,7 +29,7 @@ public class UserDetailsImpl implements UserDetails {
                 user.getId(),
                 user.getEmail(),
                 user.getPassword(),
-                user.isActive(),
+                user.getActive(),
                 authorities
         );
     }

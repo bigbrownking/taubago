@@ -54,5 +54,5 @@ public class Child {
 
     @Column(nullable = false)
     @Builder.Default
-    private boolean active = true;
+    private Boolean active = true;
 }

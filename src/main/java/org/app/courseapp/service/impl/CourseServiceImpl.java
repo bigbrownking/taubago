@@ -88,13 +88,13 @@ public class CourseServiceImpl implements CourseService {
         }
 
         int lastCompletedOrder = enrollments.stream()
-                .filter(e -> Boolean.TRUE.equals(e.isCompleted()))
+                .filter(e -> Boolean.TRUE.equals(e.getCompleted()))
                 .map(e -> e.getCourse().getOrder())
                 .max(Integer::compareTo)
                 .orElse(0);
 
         boolean hasActiveCourse = enrollments.stream()
-                .anyMatch(e -> !Boolean.TRUE.equals(e.isCompleted()));
+                .anyMatch(e -> !Boolean.TRUE.equals(e.getCompleted()));
 
         if (hasActiveCourse) {
             return lastCompletedOrder + 2;
@@ -178,7 +178,7 @@ public class CourseServiceImpl implements CourseService {
         boolean hasActiveCourse = enrollmentRepository
                 .findByUserId(currentUser.getId())
                 .stream()
-                .anyMatch(e -> !Boolean.TRUE.equals(e.isCompleted()));
+                .anyMatch(e -> !Boolean.TRUE.equals(e.getCompleted()));
 
         if (hasActiveCourse) {
             throw new RuntimeException("You must complete your current course before enrolling in a new one");
@@ -194,7 +194,7 @@ public class CourseServiceImpl implements CourseService {
 
             boolean previousCompleted = enrollmentRepository
                     .findByUserIdAndCourseId(currentUser.getId(), previousCourse.getId())
-                    .map(e -> Boolean.TRUE.equals(e.isCompleted()))
+                    .map(e -> Boolean.TRUE.equals(e.getCompleted()))
                     .orElse(false);
 
             if (!previousCompleted) {
@@ -265,7 +265,7 @@ public class CourseServiceImpl implements CourseService {
                 .findByUserIdAndCourseId(currentUser.getId(), courseId)
                 .orElseThrow(() -> new RuntimeException("Not enrolled in this course"));
 
-        if (Boolean.TRUE.equals(enrollment.isCompleted())) {
+        if (Boolean.TRUE.equals(enrollment.getCompleted())) {
             throw new RuntimeException("Course already completed");
         }
 

@@ -266,8 +266,9 @@ public class VideoServiceImpl implements VideoService {
     private String generateObjectKey(Lesson lesson, VideoType type, String categoryName, String originalFilename) {
         String extension = getFileExtension(originalFilename);
         String path = categoryName != null ? categoryName.toLowerCase() : type.name().toLowerCase();
-        return String.format("courses/%d/lessons/%d/%s/%d.%s",
+        String rawKey = String.format("courses/%d/lessons/%d/%s/%d.%s",
                 lesson.getCourse().getId(), lesson.getId(), path, System.currentTimeMillis(), extension);
+        return minioService.sanitizeObjectKey(rawKey);
     }
 
     private String getFileExtension(String filename) {
@@ -285,7 +286,7 @@ public class VideoServiceImpl implements VideoService {
             long newProgress = calculateCourseProgress(courseId, userId);
             enrollment.setProgressPercentage(newProgress);
 
-            if (newProgress >= 100 && !Boolean.TRUE.equals(enrollment.isCompleted())) {
+            if (newProgress >= 100 && !Boolean.TRUE.equals(enrollment.getCompleted())) {
                 enrollment.setCompleted(true);
                 enrollment.setCompletedAt(LocalDateTime.now());
                 log.info("User {} completed course {}", userId, courseId);

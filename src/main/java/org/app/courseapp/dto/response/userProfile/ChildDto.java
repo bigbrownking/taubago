@@ -26,7 +26,7 @@ public class ChildDto {
                 .surname(child.getSurname())
                 .age(child.getAge())
                 .diagnosis(child.getDiagnosis().getName())
-                .active(child.isActive())
+                .active(child.getActive())
                 .createdDate(child.getCreatedDate())
                 .build();
     }

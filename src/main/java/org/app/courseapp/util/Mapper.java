@@ -49,7 +49,7 @@ public class Mapper {
 
             isEnrolled = currentEnrollment.isPresent();
             isCompleted = currentEnrollment
-                    .map(e -> Boolean.TRUE.equals(e.isCompleted()))
+                    .map(e -> Boolean.TRUE.equals(e.getCompleted()))
                     .orElse(false);
 
             if (isEnrolled) {
@@ -57,7 +57,7 @@ public class Mapper {
             }
 
             boolean hasActiveCourse = userEnrollments.stream()
-                    .anyMatch(e -> !Boolean.TRUE.equals(e.isCompleted()));
+                    .anyMatch(e -> !Boolean.TRUE.equals(e.getCompleted()));
 
             boolean previousCompleted = true;
             if (course.getOrder() > 1) {
@@ -66,7 +66,7 @@ public class Mapper {
                     previousCompleted = userEnrollments.stream()
                             .filter(e -> e.getCourse().getId().equals(previousCourse.get().getId()))
                             .findFirst()
-                            .map(e -> Boolean.TRUE.equals(e.isCompleted()))
+                            .map(e -> Boolean.TRUE.equals(e.getCompleted()))
                             .orElse(false);
                 }
             }
@@ -205,7 +205,7 @@ public class Mapper {
         ParentProfileDto dto = new ParentProfileDto();
         dto.setId(parent.getId());
         dto.setEmail(parent.getEmail());
-        dto.setActive(parent.isActive());
+        dto.setActive(parent.getActive());
         dto.setCreatedDate(parent.getCreatedDate());
         dto.setRoles(parent.getRoles().stream()
                 .map(UserRole::getName)
@@ -218,7 +218,7 @@ public class Mapper {
 
         // Children
         List<ChildDto> children = parent.getChildren().stream()
-                .filter(Child::isActive)
+                .filter(Child::getActive)
                 .map(ChildDto::fromEntity)
                 .collect(Collectors.toList());
         dto.setChildren(children);
@@ -247,7 +247,7 @@ public class Mapper {
         AdministratorProfileDto dto = new AdministratorProfileDto();
         dto.setId(admin.getId());
         dto.setEmail(admin.getEmail());
-        dto.setActive(admin.isActive());
+        dto.setActive(admin.getActive());
         dto.setCreatedDate(admin.getCreatedDate());
         dto.setRoles(admin.getRoles().stream()
                 .map(UserRole::getName)
@@ -263,7 +263,7 @@ public class Mapper {
         SpecialistProfileDto dto = new SpecialistProfileDto();
         dto.setId(specialist.getId());
         dto.setEmail(specialist.getEmail());
-        dto.setActive(specialist.isActive());
+        dto.setActive(specialist.getActive());
         dto.setCreatedDate(specialist.getCreatedDate());
         dto.setRoles(specialist.getRoles().stream()
                 .map(UserRole::getName)
@@ -278,7 +278,7 @@ public class Mapper {
 
     public String resolveUserName(User user) {
         if (user == null) return "Неизвестный";
-        if (user.isDeleted()) return "Удалённый пользователь";
+        if (user.getDeleted()) return "Удалённый пользователь";
         if (user instanceof Parent p) return p.getName() + " " + p.getSurname();
         if (user instanceof Curator c) return c.getName() + " " + c.getSurname();
         if (user instanceof Specialist s) return s.getName() + " " + s.getSurname();
