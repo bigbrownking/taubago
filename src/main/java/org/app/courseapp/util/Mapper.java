@@ -26,6 +26,7 @@ public class Mapper {
     private final CourseReviewRepository reviewRepository;
     private final CourseRepository courseRepository;
     private final LessonRepository lessonRepository;
+    private final LessonReportRepository reportRepository;
     private final UserRepository userRepository;
     private final RegistrationAnswerRepository registrationAnswerRepository;
     private final ReviewLikeRepository reviewLikeRepository;
@@ -134,6 +135,7 @@ public class Mapper {
                 .description(lesson.getDescription())
                 .dayNumber(lesson.getDayNumber())
                 .isCompleted(isCompleted)
+                .isReportSubmitted(reportRepository.existsByLessonIdAndParentId(lesson.getId(), userId))
                 .videos(lessonVideos.stream()
                         .map(video -> convertVideoToDto(video, userId))
                         .toList())
@@ -206,7 +208,7 @@ public class Mapper {
         dto.setActive(parent.isActive());
         dto.setCreatedDate(parent.getCreatedDate());
         dto.setRoles(parent.getRoles().stream()
-                .map(role -> role.getName())
+                .map(UserRole::getName)
                 .collect(Collectors.toSet()));
         dto.setUserType("PARENT");
         dto.setName(parent.getName());

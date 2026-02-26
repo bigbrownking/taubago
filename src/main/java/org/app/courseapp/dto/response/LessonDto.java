@@ -18,5 +18,6 @@ public class LessonDto {
     private Integer dayNumber;
     private List<VideoDto> videos;
     private Boolean isCompleted;
+    private Boolean isReportSubmitted;
 
 }

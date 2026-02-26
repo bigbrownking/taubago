@@ -12,4 +12,5 @@ public interface LessonReportRepository extends JpaRepository<LessonReport, Long
     Optional<LessonReport> findByLessonIdAndParentId(Long lessonId, Long parentId);
     List<LessonReport> findByLessonId(Long lessonId);
     List<LessonReport> findByParentId(Long parentId);
+    boolean existsByLessonIdAndParentId(Long lessonId, Long parentId);
 }
