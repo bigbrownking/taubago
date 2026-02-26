@@ -21,7 +21,7 @@ public class CompletionChecker {
     public boolean isLessonCompleted(Lesson lesson, Long userId) {
         List<Video> lessonVideos = lesson.getLessonVideos();
         if (lessonVideos.isEmpty()) {
-            return true;
+            return false;
         }
         return lessonVideos.stream()
                 .allMatch(video -> isVideoCompleted(video.getId(), userId));

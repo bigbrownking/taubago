@@ -34,18 +34,26 @@ public class Mapper {
 
     public CourseDto convertCourseToDto(Course course, Long userId) {
         boolean isEnrolled = false;
+        boolean isCompleted = false;
         boolean available = true;
         String unavailableReason = null;
         long progress = 0;
 
         if (userId != null) {
-            isEnrolled = enrollmentRepository.existsByUserIdAndCourseId(userId, course.getId());
+            List<CourseEnrollment> userEnrollments = enrollmentRepository.findByUserId(userId);
+
+            Optional<CourseEnrollment> currentEnrollment = userEnrollments.stream()
+                    .filter(e -> e.getCourse().getId().equals(course.getId()))
+                    .findFirst();
+
+            isEnrolled = currentEnrollment.isPresent();
+            isCompleted = currentEnrollment
+                    .map(e -> Boolean.TRUE.equals(e.isCompleted()))
+                    .orElse(false);
 
             if (isEnrolled) {
-                 progress = calculateCourseProgress(course.getId(), userId);
+                progress = calculateCourseProgress(course.getId(), userId);
             }
-
-            List<CourseEnrollment> userEnrollments = enrollmentRepository.findByUserId(userId);
 
             boolean hasActiveCourse = userEnrollments.stream()
                     .anyMatch(e -> !Boolean.TRUE.equals(e.isCompleted()));
@@ -98,8 +106,7 @@ public class Mapper {
                 .createdAt(course.getCreatedAt())
                 .updatedAt(course.getUpdatedAt())
                 .isEnrolled(isEnrolled)
-                .isCompleted(Boolean.TRUE.equals(enrollmentRepository.findByUserIdAndCourseId(userId, course.getId())
-                        .map(CourseEnrollment::isCompleted).orElse(false)))
+                .isCompleted(isCompleted)
                 .keywords(course.getKeywords())
                 .averageRating(averageRating)
                 .totalRatings(totalRatings)
@@ -177,6 +184,7 @@ public class Mapper {
         }
 
         return lessons.stream()
+                .filter(lesson -> !lesson.getLessonVideos().isEmpty())
                 .filter(lesson -> completionChecker.isLessonCompleted(lesson, userId))
                 .count();
     }
