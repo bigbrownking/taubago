@@ -71,6 +71,7 @@ public class DataInitializer implements CommandLineRunner {
                     .surname("Curator")
                     .password(passwordEncoder.encode("Curator123!"))
                     .active(true)
+                    .deleted(false)
                     .roles(new HashSet<>(Set.of(curatorRole)))
                     .build();
 
@@ -93,6 +94,7 @@ public class DataInitializer implements CommandLineRunner {
                     .surname("Parent")
                     .password(passwordEncoder.encode("Parent123!"))
                     .active(true)
+                    .deleted(false)
                     .roles(new HashSet<>(Set.of(parentRole)))
                     .build();
 
@@ -115,6 +117,7 @@ public class DataInitializer implements CommandLineRunner {
                     .surname("System")
                     .password(passwordEncoder.encode("Admin123!"))
                     .active(true)
+                    .deleted(false)
                     .roles(new HashSet<>(Set.of(adminRole)))
                     .build();
 
