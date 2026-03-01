@@ -15,4 +15,10 @@ public class SpecialistProfileDto extends BaseUserProfileDto {
     private List<Specialization> specialization;
     private String phoneNumber;
     private String profilePictureUrl;
+    private Integer experienceYears;
+    private String photoUrl;
+    private String telegramUrl;
+    private boolean hasFreeSession;
+    private Integer pricePerHour;
+    private Double rating;
 }

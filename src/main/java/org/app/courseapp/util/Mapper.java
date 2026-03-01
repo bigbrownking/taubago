@@ -273,6 +273,12 @@ public class Mapper {
         dto.setSurname(specialist.getSurname());
         dto.setSpecialization(specialist.getSpecializations());
         dto.setPhoneNumber(specialist.getPhoneNumber());
+        dto.setExperienceYears(specialist.getExperienceYears());
+        dto.setPhotoUrl(specialist.getPhotoUrl());
+        dto.setTelegramUrl(specialist.getTelegramUrl());
+        dto.setHasFreeSession(specialist.isHasFreeSession());
+        dto.setPricePerHour(specialist.getPricePerHour());
+        dto.setRating(specialist.getRating());
         return dto;
     }
 
