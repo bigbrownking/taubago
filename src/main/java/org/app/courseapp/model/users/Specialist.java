@@ -23,6 +23,24 @@ public class Specialist extends User {
     @Column(name = "surname", nullable = false)
     private String surname;
 
+    @Column(name = "experience_years")
+    private Integer experienceYears;
+
+    @Column(name = "photo_url")
+    private String photoUrl;
+
+    @Column(name = "telegram_url")
+    private String telegramUrl;
+
+    @Column(name = "has_free_session")
+    private boolean hasFreeSession;
+
+    @Column(name = "price_per_hour")
+    private Integer pricePerHour;
+
+    @Column(name = "rating")
+    private Double rating;
+
     @Builder.Default
     @ManyToMany(fetch = FetchType.LAZY)
     @JoinTable(

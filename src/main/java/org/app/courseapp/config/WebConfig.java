@@ -62,6 +62,7 @@ public class WebConfig {
                         .requestMatchers("/error/**").permitAll()
                         .requestMatchers("/dict/**").permitAll()
                         .requestMatchers("/admin/**").hasRole("ADMIN")
+                        .requestMatchers("/experts/my/slots/**").hasRole("SPECIALIST")
                         .anyRequest().authenticated()
                 )
                 .authenticationProvider(authenticationProvider())

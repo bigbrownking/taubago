@@ -2,6 +2,8 @@ package org.app.courseapp.service.impl;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.app.courseapp.dto.request.RegisterCuratorRequest;
+import org.app.courseapp.dto.request.RegisterSpecialistRequest;
 import org.app.courseapp.dto.request.UpdateProfileRequest;
 import org.app.courseapp.dto.response.*;
 import org.app.courseapp.dto.response.userProfile.*;
@@ -18,7 +20,10 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 @Slf4j
@@ -27,6 +32,7 @@ import java.util.stream.Collectors;
 public class UserServiceImpl implements UserService {
 
     private final UserRepository userRepository;
+    private final UserRoleRepository userRoleRepository;
     private final SpecializationRepository specializationRepository;
     private final Mapper mapper;
     private final PasswordEncoder passwordEncoder;
@@ -112,5 +118,61 @@ public class UserServiceImpl implements UserService {
         currentUser.setDeletedAt(LocalDateTime.now());
         userRepository.save(currentUser);
         log.info("User account deleted: {}", currentUser.getId());
+    }
+
+    @Override
+    @Transactional
+    public BaseUserProfileDto registerCurator(RegisterCuratorRequest request) {
+        if (userRepository.existsByEmail(request.getEmail())) {
+            throw new RuntimeException("Email already in use: " + request.getEmail());
+        }
+
+        Curator curator = Curator.builder()
+                .name(request.getName())
+                .surname(request.getSurname())
+                .email(request.getEmail())
+                .password(passwordEncoder.encode(request.getPassword()))
+                .phoneNumber(request.getPhoneNumber())
+                .roles(Set.of(userRoleRepository.findByName("ROLE_CURATOR")
+                        .orElseThrow(() -> new RuntimeException("Default role not found"))))
+                .build();
+
+        userRepository.save(curator);
+        log.info("Curator registered: {}", request.getEmail());
+        return getUserProfile(curator.getEmail());
+    }
+
+    @Override
+    @Transactional
+    public BaseUserProfileDto registerSpecialist(RegisterSpecialistRequest request) {
+        if (userRepository.existsByEmail(request.getEmail())) {
+            throw new RuntimeException("Email already in use: " + request.getEmail());
+        }
+
+        List<Specialization> specializations = new ArrayList<>();
+        if (request.getSpecializationIds() != null && !request.getSpecializationIds().isEmpty()) {
+            specializations = specializationRepository.findAllById(request.getSpecializationIds());
+        }
+
+        Specialist specialist = Specialist.builder()
+                .name(request.getName())
+                .surname(request.getSurname())
+                .email(request.getEmail())
+                .password(passwordEncoder.encode(request.getPassword()))
+                .phoneNumber(request.getPhoneNumber())
+                .experienceYears(request.getExperienceYears())
+                .photoUrl(request.getPhotoUrl())
+                .telegramUrl(request.getTelegramUrl())
+                .hasFreeSession(request.isHasFreeSession())
+                .pricePerHour(request.getPricePerHour())
+                .rating(request.getRating())
+                .specializations(specializations)
+                .roles(Set.of(userRoleRepository.findByName("ROLE_SPECIALIST")
+                        .orElseThrow(() -> new RuntimeException("Default role not found"))))
+                .build();
+
+        userRepository.save(specialist);
+        log.info("Specialist registered: {}", request.getEmail());
+        return getUserProfile(specialist.getEmail());
     }
 }

@@ -22,6 +22,7 @@ import java.util.Set;
 public class DataInitializer implements CommandLineRunner {
 
     private final UserRoleRepository userRoleRepository;
+    private final SpecializationRepository specializationRepository;
     private final VideoCategoryRepository categoryRepository;
     private final DiagnosisRepository diagnosisRepository;
     private final RegistrationQuestionRepository registrationQuestionRepository;
@@ -47,6 +48,7 @@ public class DataInitializer implements CommandLineRunner {
         createRegistrationQuestions();
         createVideoCategories();
         createDiagnosis();
+        createSpecializations();
 
         log.info("✅ Data initialization completed");
     }
@@ -172,6 +174,17 @@ public class DataInitializer implements CommandLineRunner {
                     Diagnosis.builder().name("Developmental delay (ZPR)").build(),
                     Diagnosis.builder().name("Autism Spectrum (ASD)").build(),
                     Diagnosis.builder().name("Other").build()
+            ));
+        }
+    }
+
+    private void createSpecializations(){
+        if (specializationRepository.count() == 0) {
+            specializationRepository.saveAll(List.of(
+                    Specialization.builder().name("Аутизм").build(),
+                    Specialization.builder().name("ЗРР").build(),
+                    Specialization.builder().name("Сенсорика").build(),
+                    Specialization.builder().name("Арт-терапия").build()
             ));
         }
     }

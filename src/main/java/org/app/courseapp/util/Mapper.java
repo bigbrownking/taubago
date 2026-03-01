@@ -334,4 +334,73 @@ public class Mapper {
 
         return dto;
     }
+
+    public SpecialistCardDto convertToSpecialistCardDto(Specialist specialist) {
+        return SpecialistCardDto.builder()
+                .id(specialist.getId())
+                .name(specialist.getName())
+                .surname(specialist.getSurname())
+                .photoUrl(specialist.getPhotoUrl())
+                .phoneNumber(specialist.getPhoneNumber())
+                .rating(specialist.getRating())
+                .experienceYears(specialist.getExperienceYears())
+                .hasFreeSession(specialist.isHasFreeSession())
+                .pricePerHour(specialist.getPricePerHour())
+                .telegramUrl(specialist.getTelegramUrl())
+                .specializations(specialist.getSpecializations().stream()
+                        .map(Specialization::getName)
+                        .toList())
+                .build();
+    }
+
+    public SpecialistDetailDto convertToSpecialistDetailDto(Specialist specialist) {
+        return SpecialistDetailDto.builder()
+                .id(specialist.getId())
+                .name(specialist.getName())
+                .surname(specialist.getSurname())
+                .photoUrl(specialist.getPhotoUrl())
+                .phoneNumber(specialist.getPhoneNumber())
+                .rating(specialist.getRating())
+                .experienceYears(specialist.getExperienceYears())
+                .hasFreeSession(specialist.isHasFreeSession())
+                .pricePerHour(specialist.getPricePerHour())
+                .telegramUrl(specialist.getTelegramUrl())
+                .specializations(specialist.getSpecializations().stream()
+                        .map(Specialization::getName)
+                        .toList())
+                .build();
+    }
+
+    public SpecialistSlotDto convertToSpecialistSlotDto(SpecialistSlot slot) {
+        return SpecialistSlotDto.builder()
+                .id(slot.getId())
+                .date(slot.getDate())
+                .time(slot.getTime())
+                .booked(slot.isBooked())
+                .build();
+    }
+    public BookingHistoryDto convertToBookingHistoryDto(Booking booking) {
+        Specialist s = booking.getSlot().getSpecialist();
+        return BookingHistoryDto.builder()
+                .bookingId(booking.getId())
+                .specialistId(s.getId())
+                .specialistName("Др. " + s.getName() + " " + s.getSurname())
+                .date(booking.getSlot().getDate())
+                .time(booking.getSlot().getTime())
+                .bookedAt(booking.getBookedAt())
+                .status(booking.getStatus())
+                .build();
+    }
+
+    public BookingConfirmationDto convertToBookingConfirmationDto(Booking booking) {
+        Specialist s = booking.getSlot().getSpecialist();
+        return BookingConfirmationDto.builder()
+                .bookingId(booking.getId())
+                .specialistName("Др. " + s.getName() + " " + s.getSurname())
+                .date(booking.getSlot().getDate())
+                .time(booking.getSlot().getTime())
+                .isFreeSession(s.isHasFreeSession())
+                .bookedAt(booking.getBookedAt())
+                .build();
+    }
 }

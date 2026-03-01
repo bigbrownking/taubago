@@ -5,6 +5,8 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.app.courseapp.dto.request.GrantVideoCategoryAccessRequest;
+import org.app.courseapp.dto.request.RegisterCuratorRequest;
+import org.app.courseapp.dto.request.RegisterSpecialistRequest;
 import org.app.courseapp.dto.response.CourseDto;
 import org.app.courseapp.dto.request.CreateCourseRequest;
 import org.app.courseapp.dto.response.ParentVideoAccessDto;
@@ -103,5 +105,21 @@ public class AdminController {
     public ResponseEntity<ParentVideoAccessDto> getParentVideoAccess(@PathVariable Long parentId) {
         log.info("Admin fetching video access for parent {}", parentId);
         return ResponseEntity.ok(parentVideoAccessService.getParentAccess(parentId));
+    }
+
+    @PostMapping("/curators")
+    @Operation(summary = "Register a new curator")
+    public ResponseEntity<BaseUserProfileDto> registerCurator(
+            @Valid @RequestBody RegisterCuratorRequest request) {
+        log.info("Admin registering curator: {}", request.getEmail());
+        return ResponseEntity.ok(userService.registerCurator(request));
+    }
+
+    @PostMapping("/specialists")
+    @Operation(summary = "Register a new specialist")
+    public ResponseEntity<BaseUserProfileDto> registerSpecialist(
+            @Valid @RequestBody RegisterSpecialistRequest request) {
+        log.info("Admin registering specialist: {}", request.getEmail());
+        return ResponseEntity.ok(userService.registerSpecialist(request));
     }
 }
