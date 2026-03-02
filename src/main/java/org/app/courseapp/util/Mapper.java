@@ -21,6 +21,7 @@ import java.util.stream.Collectors;
 public class Mapper {
 
     private final MinioService minioService;
+    private final VideoRepository videoRepository;
     private final VideoProgressRepository videoProgressRepository;
     private final CourseEnrollmentRepository enrollmentRepository;
     private final CourseReviewRepository reviewRepository;
@@ -60,8 +61,8 @@ public class Mapper {
                     .anyMatch(e -> !Boolean.TRUE.equals(e.getCompleted()));
 
             boolean previousCompleted = true;
-            if (course.getOrder() > 1) {
-                Optional<Course> previousCourse = courseRepository.findByOrder(course.getOrder() - 1);
+            if (course.getCourseOrder() > 1) {
+                Optional<Course> previousCourse = courseRepository.findByCourseOrder(course.getCourseOrder() - 1);
                 if (previousCourse.isPresent()) {
                     previousCompleted = userEnrollments.stream()
                             .filter(e -> e.getCourse().getId().equals(previousCourse.get().getId()))
@@ -115,7 +116,7 @@ public class Mapper {
                 .hasUserRated(hasUserRated)
                 .hasUserReviewed(hasUserReviewed)
                 .available(available)
-                .order(course.getOrder())
+                .order(course.getCourseOrder())
                 .unavailableReason(unavailableReason)
                 .build();
     }
@@ -409,4 +410,43 @@ public class Mapper {
                 .bookedAt(booking.getBookedAt())
                 .build();
     }
+    public ParentLessonReportFullDto buildFullDto(LessonReport report, Long lessonId) {
+        List<VideoDto> homeworkVideos = videoRepository
+                .findByLessonIdAndUploadedById(lessonId, report.getParent().getId())
+                .stream()
+                .filter(v -> v.getType() == VideoType.HOMEWORK)
+                .map(v -> convertVideoToDto(v, report.getParent().getId()))
+                .toList();
+
+        User parent = report.getParent();
+        User realParent = userRepository.findById(parent.getId()).orElse(parent);
+        String parentName = resolveUserName(realParent);
+
+
+        return ParentLessonReportFullDto.builder()
+                .parentId(report.getParent().getId())
+                .parentName(parentName)
+                .parentEmail(report.getParent().getEmail())
+                .lessonId(report.getLesson().getId())
+                .lessonTitle(report.getLesson().getTitle())
+                .dayNumber(report.getLesson().getDayNumber())
+                .childReactionRating(report.getChildReactionRating())
+                .comment(report.getComment())
+                .reportCreatedAt(report.getCreatedAt())
+                .reportUpdatedAt(report.getUpdatedAt())
+                .homeworkVideos(homeworkVideos)
+                .build();
+    }
+    public PublicLessonReportDto convertToPublicLessonReportDto(LessonReport report) {
+        PublicLessonReportDto dto = new PublicLessonReportDto();
+        dto.setChildReactionRating(report.getChildReactionRating());
+        dto.setComment(report.getComment());
+        dto.setCreatedAt(report.getCreatedAt());
+
+        if (report.getParent() instanceof Parent parent) {
+            dto.setParentName(resolveUserName(parent));
+        }
+        return dto;
+    }
+
 }

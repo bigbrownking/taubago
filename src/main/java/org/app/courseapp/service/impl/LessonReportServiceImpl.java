@@ -67,15 +67,12 @@ public class LessonReportServiceImpl implements LessonReportService {
 
         if (videos != null && !videos.isEmpty()) {
             for (MultipartFile file : videos) {
-                String rawKey = String.format(
-                        "courses/%d/lessons/%d/homework/user_%d_%d.%s",
+                String objectKey = minioService.generateHomeworkKey(
                         lesson.getCourse().getId(),
                         lesson.getId(),
                         currentUser.getId(),
-                        System.currentTimeMillis(),
-                        getFileExtension(file.getOriginalFilename())
+                        file.getOriginalFilename()
                 );
-                String objectKey = minioService.sanitizeObjectKey(rawKey);
 
                 minioService.uploadFile(
                         objectKey,
@@ -107,12 +104,6 @@ public class LessonReportServiceImpl implements LessonReportService {
         return mapper.convertToLessonReportDto(report);
     }
 
-    private String getFileExtension(String filename) {
-        if (filename == null) return "mp4";
-        int dotIndex = filename.lastIndexOf('.');
-        return dotIndex > 0 ? filename.substring(dotIndex + 1) : "mp4";
-    }
-
     @Override
     @Transactional(readOnly = true)
     public LessonReportDto getMyReport(Long lessonId) {
@@ -138,17 +129,7 @@ public class LessonReportServiceImpl implements LessonReportService {
 
         return reportRepository.findByLessonId(lessonId).stream()
                 .filter(r -> !r.getParent().getId().equals(currentUser.getId()))
-                .map(report -> {
-                    PublicLessonReportDto dto = new PublicLessonReportDto();
-                    dto.setChildReactionRating(report.getChildReactionRating());
-                    dto.setComment(report.getComment());
-                    dto.setCreatedAt(report.getCreatedAt());
-
-                    if (report.getParent() instanceof Parent parent) {
-                        dto.setParentName(mapper.resolveUserName(parent));
-                    }
-                    return dto;
-                })
+                .map(mapper::convertToPublicLessonReportDto)
                 .toList();
     }
 
@@ -156,7 +137,7 @@ public class LessonReportServiceImpl implements LessonReportService {
     @Transactional(readOnly = true)
     public List<ParentLessonReportFullDto> getFullReportsByLesson(Long lessonId) {
         return reportRepository.findByLessonId(lessonId).stream()
-                .map(report -> buildFullDto(report, lessonId))
+                .map(report -> mapper.buildFullDto(report, lessonId))
                 .toList();
     }
 
@@ -167,35 +148,8 @@ public class LessonReportServiceImpl implements LessonReportService {
                 .findByLessonIdAndParentId(lessonId, parentId)
                 .orElseThrow(() -> new RuntimeException("Report not found"));
 
-        return buildFullDto(report, lessonId);
+        return mapper.buildFullDto(report, lessonId);
     }
 
-    private ParentLessonReportFullDto buildFullDto(LessonReport report, Long lessonId) {
-        // Домашние видео этого родителя по уроку
-        List<VideoDto> homeworkVideos = videoRepository
-                .findByLessonIdAndUploadedById(lessonId, report.getParent().getId())
-                .stream()
-                .filter(v -> v.getType() == VideoType.HOMEWORK)
-                .map(v -> mapper.convertVideoToDto(v, report.getParent().getId()))
-                .toList();
 
-        User parent = report.getParent();
-        User realParent = userRepository.findById(parent.getId()).orElse(parent);
-        String parentName = mapper.resolveUserName(realParent);
-
-
-        return ParentLessonReportFullDto.builder()
-                .parentId(report.getParent().getId())
-                .parentName(parentName)
-                .parentEmail(report.getParent().getEmail())
-                .lessonId(report.getLesson().getId())
-                .lessonTitle(report.getLesson().getTitle())
-                .dayNumber(report.getLesson().getDayNumber())
-                .childReactionRating(report.getChildReactionRating())
-                .comment(report.getComment())
-                .reportCreatedAt(report.getCreatedAt())
-                .reportUpdatedAt(report.getUpdatedAt())
-                .homeworkVideos(homeworkVideos)
-                .build();
-    }
 }

@@ -71,13 +71,13 @@ public class CourseServiceImpl implements CourseService {
                 .map(e -> e.getCourse().getId())
                 .toList();
 
-        List<Course> allCourses = courseRepository.findAllByOrderByOrderAsc();
+        List<Course> allCourses = courseRepository.findAllByOrderByCourseOrderAsc();
 
         Integer nextAvailableOrder = determineNextAvailableOrder(userEnrollments, allCourses);
 
         return allCourses.stream()
                 .filter(course -> !enrolledCourseIds.contains(course.getId()))
-                .filter(course -> course.getOrder() >= nextAvailableOrder)
+                .filter(course -> course.getCourseOrder() >= nextAvailableOrder)
                 .map(course -> mapper.convertCourseToDto(course, currentUser.getId()))
                 .toList();
     }
@@ -89,7 +89,7 @@ public class CourseServiceImpl implements CourseService {
 
         int lastCompletedOrder = enrollments.stream()
                 .filter(e -> Boolean.TRUE.equals(e.getCompleted()))
-                .map(e -> e.getCourse().getOrder())
+                .map(e -> e.getCourse().getCourseOrder())
                 .max(Integer::compareTo)
                 .orElse(0);
 
@@ -133,7 +133,7 @@ public class CourseServiceImpl implements CourseService {
         course.setDescription(request.getDescription());
         course.setDurationDays(request.getDurationDays());
         course.setCreatedBy(currentUser);
-        course.setOrder(courseRepository.findNextOrder());
+        course.setCourseOrder(courseRepository.findNextCourseOrder());
         if (request.getKeywords() != null) {
             course.setKeywords(request.getKeywords());
         }
@@ -188,8 +188,8 @@ public class CourseServiceImpl implements CourseService {
                 .orElseThrow(() -> new RuntimeException("Course not found"));
 
         // Проверяем что предыдущий курс по порядку завершён
-        if (course.getOrder() > 1) {
-            Course previousCourse = courseRepository.findByOrder(course.getOrder() - 1)
+        if (course.getCourseOrder() > 1) {
+            Course previousCourse = courseRepository.findByCourseOrder(course.getCourseOrder() - 1)
                     .orElseThrow(() -> new RuntimeException("Previous course not found"));
 
             boolean previousCompleted = enrollmentRepository

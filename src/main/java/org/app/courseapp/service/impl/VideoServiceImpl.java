@@ -164,7 +164,12 @@ public class VideoServiceImpl implements VideoService {
         List<Video> videos = new ArrayList<>();
 
         for (MultipartFile file : files) {
-            String objectKey = generateObjectKey(lesson, VideoType.LESSON, category.getName(), file.getOriginalFilename());
+            String objectKey = minioService.generateLessonVideoKey(
+                    lesson.getCourse().getId(),
+                    lesson.getId(),
+                    category.getName(),
+                    file.getOriginalFilename()
+            );
 
             minioService.uploadFile(objectKey, file.getInputStream(), file.getContentType(), file.getSize());
 
@@ -261,20 +266,6 @@ public class VideoServiceImpl implements VideoService {
 
         // Для других ролей - запрет по умолчанию
         return false;
-    }
-
-    private String generateObjectKey(Lesson lesson, VideoType type, String categoryName, String originalFilename) {
-        String extension = getFileExtension(originalFilename);
-        String path = categoryName != null ? categoryName.toLowerCase() : type.name().toLowerCase();
-        String rawKey = String.format("courses/%d/lessons/%d/%s/%d.%s",
-                lesson.getCourse().getId(), lesson.getId(), path, System.currentTimeMillis(), extension);
-        return minioService.sanitizeObjectKey(rawKey);
-    }
-
-    private String getFileExtension(String filename) {
-        if (filename == null) return "mp4";
-        int dotIndex = filename.lastIndexOf('.');
-        return dotIndex > 0 ? filename.substring(dotIndex + 1) : "mp4";
     }
 
     private void updateCourseProgress(Long userId, Long courseId) {

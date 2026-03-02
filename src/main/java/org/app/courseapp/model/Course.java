@@ -33,8 +33,8 @@ public class Course {
     @Column(name = "duration_days")
     private int durationDays;
 
-    @Column(name = "course_order", unique = true)
-    private int order;
+    @Column(name = "course_order", unique = true, nullable = false, columnDefinition = "int default 0")
+    private int courseOrder;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "created_by")
