@@ -2,6 +2,7 @@ package org.app.courseapp.service.impl;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.app.courseapp.dto.request.ChangePasswordRequest;
 import org.app.courseapp.dto.request.RegisterCuratorRequest;
 import org.app.courseapp.dto.request.RegisterSpecialistRequest;
 import org.app.courseapp.dto.request.UpdateProfileRequest;
@@ -174,5 +175,18 @@ public class UserServiceImpl implements UserService {
         userRepository.save(specialist);
         log.info("Specialist registered: {}", request.getEmail());
         return getUserProfile(specialist.getEmail());
+    }
+
+    @Override
+    public void changeMyPassword(ChangePasswordRequest request) {
+        User currentUser = getCurrentUser();
+
+        if (!passwordEncoder.matches(request.getCurrentPassword(), currentUser.getPassword())) {
+            throw new RuntimeException("Old password is incorrect");
+        }
+
+        currentUser.setPassword(passwordEncoder.encode(request.getNewPassword()));
+        userRepository.save(currentUser);
+        log.info("User {} changed password", currentUser.getEmail());
     }
 }

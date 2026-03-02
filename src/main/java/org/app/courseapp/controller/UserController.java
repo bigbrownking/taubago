@@ -5,6 +5,7 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.app.courseapp.dto.request.ChangePasswordRequest;
 import org.app.courseapp.dto.request.UpdateProfileRequest;
 import org.app.courseapp.dto.response.userProfile.BaseUserProfileDto;
 import org.app.courseapp.service.UserService;
@@ -43,5 +44,12 @@ public class UserController {
     public ResponseEntity<Void> deleteMyAccount() {
         userService.deactivateMyAccount();
         return ResponseEntity.noContent().build();
+    }
+
+    @PatchMapping("/me/password")
+    public ResponseEntity<Void> changeMyPassword(
+            @RequestBody ChangePasswordRequest request) {
+        userService.changeMyPassword(request);
+        return ResponseEntity.ok().build();
     }
 }

@@ -1,5 +1,6 @@
 package org.app.courseapp.service;
 
+import org.app.courseapp.dto.request.ChangePasswordRequest;
 import org.app.courseapp.dto.request.RegisterCuratorRequest;
 import org.app.courseapp.dto.request.RegisterSpecialistRequest;
 import org.app.courseapp.dto.request.UpdateProfileRequest;
@@ -14,4 +15,5 @@ public interface UserService {
     void deactivateMyAccount();
     BaseUserProfileDto registerCurator(RegisterCuratorRequest request);
     BaseUserProfileDto registerSpecialist(RegisterSpecialistRequest request);
+    void changeMyPassword(ChangePasswordRequest request);
 }
