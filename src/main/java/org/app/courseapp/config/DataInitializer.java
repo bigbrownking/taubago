@@ -97,7 +97,6 @@ public class DataInitializer implements CommandLineRunner {
                     .password(passwordEncoder.encode("Specialist123!"))
                     .active(true)
                     .deleted(false)
-                    .sessionCount(0)
                     .roles(new HashSet<>(Set.of(specialistRole)))
                     .build();
 

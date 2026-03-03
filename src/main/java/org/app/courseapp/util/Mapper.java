@@ -121,6 +121,7 @@ public class Mapper {
                 .unavailableReason(unavailableReason)
                 .build();
     }
+
     public LessonDto convertLessonToDto(Lesson lesson, Long userId) {
         List<Video> lessonVideos = lesson.getLessonVideos();
         boolean isCompleted = !lessonVideos.isEmpty() &&
@@ -165,7 +166,7 @@ public class Mapper {
                 .build();
     }
 
-    public RegistrationQuestionDto convertRegistrationQuestionToDto(RegistrationQuestion registrationQuestion){
+    public RegistrationQuestionDto convertRegistrationQuestionToDto(RegistrationQuestion registrationQuestion) {
         return RegistrationQuestionDto.builder()
                 .id(registrationQuestion.getId())
                 .topic(registrationQuestion.getTopic())
@@ -173,9 +174,9 @@ public class Mapper {
                 .build();
     }
 
-    public List<RegistrationQuestionDto> convertRegistrationQuestionsToDto(List<RegistrationQuestion> registrationQuestions){
+    public List<RegistrationQuestionDto> convertRegistrationQuestionsToDto(List<RegistrationQuestion> registrationQuestions) {
         List<RegistrationQuestionDto> result = new ArrayList<>();
-        for(RegistrationQuestion registrationQuestion : registrationQuestions){
+        for (RegistrationQuestion registrationQuestion : registrationQuestions) {
             result.add(convertRegistrationQuestionToDto(registrationQuestion));
         }
         return result;
@@ -192,6 +193,7 @@ public class Mapper {
                 .filter(lesson -> completionChecker.isLessonCompleted(lesson, userId))
                 .count();
     }
+
     public BaseUserProfileDto convertToProfileDto(User user) {
         if (user instanceof Parent) {
             return convertParentToDto((Parent) user);
@@ -216,7 +218,7 @@ public class Mapper {
         dto.setName(parent.getName());
         dto.setSurname(parent.getSurname());
         dto.setPhoneNumber(parent.getPhoneNumber());
-        dto.setProfilePictureUrl(minioService.getPresignedUrl(MinioBucket.AVATAR, parent.getProfilePictureUrl(), 2));
+        dto.setProfilePictureUrl(parent.getProfilePictureUrl() != null ? minioService.getPresignedUrl(MinioBucket.AVATAR, parent.getProfilePictureUrl(), 2) : null);
 
         // Children
         List<ChildDto> children = parent.getChildren().stream()
@@ -276,7 +278,7 @@ public class Mapper {
         dto.setSpecialization(specialist.getSpecializations());
         dto.setPhoneNumber(specialist.getPhoneNumber());
         dto.setExperienceYears(specialist.getExperienceYears());
-        dto.setProfilePictureUrl(minioService.getPresignedUrl(MinioBucket.AVATAR, specialist.getProfilePictureUrl(), 2));
+        dto.setProfilePictureUrl(specialist.getProfilePictureUrl() != null ? minioService.getPresignedUrl(MinioBucket.AVATAR, specialist.getProfilePictureUrl(), 2) : null);
         dto.setTelegramUrl(specialist.getTelegramUrl());
         dto.setHasFreeSession(specialist.isHasFreeSession());
         dto.setPricePerHour(specialist.getPricePerHour());
@@ -409,6 +411,7 @@ public class Mapper {
                 .booked(slot.isBooked())
                 .build();
     }
+
     public BookingHistoryDto convertToBookingHistoryDto(Booking booking) {
         Specialist s = booking.getSlot().getSpecialist();
         return BookingHistoryDto.builder()
@@ -416,7 +419,7 @@ public class Mapper {
                 .specialistId(s.getId())
                 .specialistName("Др. " + s.getName() + " " + s.getSurname())
                 .specialistProfession(s.getProfession())
-                .specialistProfilePictureUrl(minioService.getPresignedUrl(MinioBucket.AVATAR, s.getProfilePictureUrl(), 2))
+                .specialistProfilePictureUrl(s.getProfilePictureUrl() != null ? minioService.getPresignedUrl(MinioBucket.AVATAR, s.getProfilePictureUrl(), 2) : null)
                 .date(booking.getSlot().getDate())
                 .time(booking.getSlot().getTime())
                 .bookedAt(booking.getBookedAt())
@@ -435,6 +438,7 @@ public class Mapper {
                 .bookedAt(booking.getBookedAt())
                 .build();
     }
+
     public ParentLessonReportFullDto buildFullDto(LessonReport report, Long lessonId) {
         List<VideoDto> homeworkVideos = videoRepository
                 .findByLessonIdAndUploadedById(lessonId, report.getParent().getId())
@@ -462,6 +466,7 @@ public class Mapper {
                 .homeworkVideos(homeworkVideos)
                 .build();
     }
+
     public PublicLessonReportDto convertToPublicLessonReportDto(LessonReport report) {
         PublicLessonReportDto dto = new PublicLessonReportDto();
         dto.setChildReactionRating(report.getChildReactionRating());
