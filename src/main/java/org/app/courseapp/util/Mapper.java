@@ -307,11 +307,9 @@ public class Mapper {
     }
 
     public ReviewDto convertToReviewDto(CourseReview review, Long currentUserId) {
-        boolean likedByCurrentUser = false;
-        if (currentUserId != null) {
-            likedByCurrentUser = reviewLikeRepository
-                    .existsByUserIdAndReviewId(currentUserId, review.getId());
-        }
+        boolean likedByMe = currentUserId != null &&
+                reviewLikeRepository.existsByUserIdAndCourseReviewId(currentUserId, review.getId());
+
 
         DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd MMM yyyy", Locale.forLanguageTag("ru"));
         String formattedDate = review.getCreatedAt().format(formatter);
@@ -329,7 +327,7 @@ public class Mapper {
                 .rating(review.getRating())
                 .reviewText(review.getReviewText())
                 .likeCount(review.getLikeCount())
-                .likedByCurrentUser(likedByCurrentUser)
+                .likedByCurrentUser(likedByMe)
                 .createdAt(review.getCreatedAt())
                 .formattedDate(formattedDate)
                 .build();
@@ -509,6 +507,27 @@ public class Mapper {
                 .verified(cert.isVerified())
                 .issuedAt(cert.getIssuedAt() != null ? cert.getIssuedAt() : null)
                 .documentUrl(cert.getDocumentUrl())
+                .build();
+    }
+
+    public SpecialistReviewDto convertToSpecialistReviewDto(SpecialistReview review, Long currentUserId) {
+        boolean likedByMe = currentUserId != null &&
+                reviewLikeRepository.existsByUserIdAndSpecialistReviewId(currentUserId, review.getId());
+
+        return SpecialistReviewDto.builder()
+                .id(review.getId())
+                .specialistId(review.getSpecialist().getId())
+                .specialistName(review.getSpecialist().getName() + " " + review.getSpecialist().getSurname())
+                .userId(review.getUser().getId())
+                .userName(review.getUser().getName() + " " + review.getUser().getSurname())
+                .userProfilePictureUrl(review.getUser().getProfilePictureUrl() != null ? minioService.getPresignedUrl(MinioBucket.AVATAR, review.getUser().getProfilePictureUrl(), 2): null)
+                .rating(review.getRating())
+                .reviewText(review.getReviewText())
+                .likeCount(review.getLikeCount())
+                .likedByMe(likedByMe)
+                .createdAt(review.getCreatedAt() != null
+                        ? review.getCreatedAt().format(DateTimeFormatter.ofPattern("dd.MM.yyyy"))
+                        : null)
                 .build();
     }
 }

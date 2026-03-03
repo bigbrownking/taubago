@@ -4,9 +4,9 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.app.courseapp.dto.request.CreateRatingRequest;
 import org.app.courseapp.dto.request.CreateReviewRequest;
-import org.app.courseapp.dto.response.CourseRatingStatsDto;
-import org.app.courseapp.dto.response.CourseReviewDto;
-import org.app.courseapp.dto.response.ReviewDto;
+import org.app.courseapp.dto.request.CreateSpecialistReviewRequest;
+import org.app.courseapp.dto.request.UpdateReviewRequest;
+import org.app.courseapp.dto.response.*;
 import org.app.courseapp.model.*;
 import org.app.courseapp.model.users.Administrator;
 import org.app.courseapp.model.users.Parent;
@@ -35,7 +35,9 @@ public class RatingServiceImpl implements RatingService {
     private final ReviewLikeRepository reviewLikeRepository;
     private final CourseRepository courseRepository;
     private final UserService userService;
+    private final UserRepository userRepository;
 
+    private final SpecialistReviewRepository specialistReviewRepository;
     private final Mapper mapper;
 
     @Override
@@ -236,26 +238,43 @@ public class RatingServiceImpl implements RatingService {
         CourseReview review = reviewRepository.findById(reviewId)
                 .orElseThrow(() -> new RuntimeException("Review not found"));
 
-        Optional<ReviewLike> existingLike = reviewLikeRepository
-                .findByUserIdAndReviewId(currentUser.getId(), reviewId);
+        Optional<ReviewLike> existing = reviewLikeRepository
+                .findByUserIdAndCourseReviewId(currentUser.getId(), reviewId);
 
-        if (existingLike.isPresent()) {
-            reviewLikeRepository.delete(existingLike.get());
+        if (existing.isPresent()) {
+            reviewLikeRepository.delete(existing.get());
             review.setLikeCount(Math.max(0, review.getLikeCount() - 1));
-            reviewRepository.save(review);
-            log.info("User {} unliked review {}", currentUser.getEmail(), reviewId);
         } else {
             ReviewLike like = new ReviewLike();
             like.setUser(currentUser);
-            like.setReview(review);
+            like.setCourseReview(review);
             reviewLikeRepository.save(like);
-
             review.incrementLikeCount();
-            reviewRepository.save(review);
-            log.info("User {} liked review {}", currentUser.getEmail(), reviewId);
         }
+        reviewRepository.save(review);
     }
+    @Override
+    @Transactional
+    public void toggleSpecialistReviewLike(Long reviewId) {
+        User currentUser = userService.getCurrentUser();
+        SpecialistReview review = specialistReviewRepository.findById(reviewId)
+                .orElseThrow(() -> new RuntimeException("Review not found"));
 
+        Optional<ReviewLike> existing = reviewLikeRepository
+                .findByUserIdAndSpecialistReviewId(currentUser.getId(), reviewId);
+
+        if (existing.isPresent()) {
+            reviewLikeRepository.delete(existing.get());
+            review.setLikeCount(Math.max(0, review.getLikeCount() - 1));
+        } else {
+            ReviewLike like = new ReviewLike();
+            like.setUser(currentUser);
+            like.setSpecialistReview(review);
+            reviewLikeRepository.save(like);
+            review.setLikeCount(review.getLikeCount() + 1);
+        }
+        specialistReviewRepository.save(review);
+    }
     @Override
     @Transactional
     public void deleteReview(Long reviewId) {
@@ -295,5 +314,110 @@ public class RatingServiceImpl implements RatingService {
         } catch (Exception e) {
             return false;
         }
+    }
+
+    @Override
+    @Transactional
+    public SpecialistReviewDto reviewSpecialist(CreateSpecialistReviewRequest request) {
+        User currentUser = userService.getCurrentUser();
+        if (!(currentUser instanceof Parent)) {
+            throw new RuntimeException("Only parents can review specialists");
+        }
+
+        Specialist specialist = (Specialist) userRepository.findById(request.getSpecialistId())
+                .orElseThrow(() -> new RuntimeException("Specialist not found"));
+
+        Optional<SpecialistReview> existing = specialistReviewRepository
+                .findByUserIdAndSpecialistId(currentUser.getId(), request.getSpecialistId());
+
+        SpecialistReview review;
+        if (existing.isPresent()) {
+            review = existing.get();
+            review.setRating(request.getRating());
+            review.setReviewText(request.getReviewText());
+        } else {
+            review = SpecialistReview.builder()
+                    .user(currentUser)
+                    .specialist(specialist)
+                    .rating(request.getRating())
+                    .reviewText(request.getReviewText())
+                    .likeCount(0)
+                    .build();
+        }
+
+        return mapper.convertToSpecialistReviewDto(specialistReviewRepository.save(review), currentUser.getId());
+    }
+
+    @Override
+    @Transactional
+    public void updateSpecialistReview(Long reviewId, UpdateReviewRequest request) {
+        User currentUser = userService.getCurrentUser();
+        SpecialistReview review = specialistReviewRepository.findById(reviewId)
+                .orElseThrow(() -> new RuntimeException("Review not found"));
+        if (!review.getUser().getId().equals(currentUser.getId())) {
+            throw new RuntimeException("Access denied");
+        }
+        if (request.getRating() != null) review.setRating(request.getRating());
+        if (request.getReviewText() != null) review.setReviewText(request.getReviewText());
+        specialistReviewRepository.save(review);
+    }
+
+    @Override
+    @Transactional
+    public void deleteSpecialistReview(Long reviewId) {
+        User currentUser = userService.getCurrentUser();
+        SpecialistReview review = specialistReviewRepository.findById(reviewId)
+                .orElseThrow(() -> new RuntimeException("Review not found"));
+        if (!review.getUser().getId().equals(currentUser.getId()) && !currentUser.hasRole("ROLE_ADMIN")) {
+            throw new RuntimeException("Access denied");
+        }
+        specialistReviewRepository.delete(review);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public Page<SpecialistReviewDto> getSpecialistReviews(Long specialistId, Pageable pageable) {
+        User currentUser = null;
+        try { currentUser = userService.getCurrentUser(); } catch (Exception ignored) {}
+        Long userId = currentUser != null ? currentUser.getId() : null;
+
+        return specialistReviewRepository
+                .findBySpecialistIdAndReviewTextIsNotNullOrderByLikeCountDescCreatedAtDesc(specialistId, pageable)
+                .map(r -> mapper.convertToSpecialistReviewDto(r, userId));
+    }
+
+    @Override
+    @Transactional
+    public ReviewDto updateCourseReview(Long reviewId, UpdateReviewRequest request) {
+        User currentUser = userService.getCurrentUser();
+        CourseReview review = reviewRepository.findById(reviewId)
+                .orElseThrow(() -> new RuntimeException("Review not found"));
+        if (!review.getUser().getId().equals(currentUser.getId())) {
+            throw new RuntimeException("Access denied");
+        }
+        if (request.getRating() != null) review.setRating(request.getRating());
+        if (request.getReviewText() != null) review.setReviewText(request.getReviewText());
+        return mapper.convertToReviewDto(reviewRepository.save(review), currentUser.getId());
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public MyReviewsDto getMyReviews() {
+        User currentUser = userService.getCurrentUser();
+
+        List<ReviewDto> courseReviews = reviewRepository
+                .findByUserId(currentUser.getId()).stream()
+                .map(r -> mapper.convertToReviewDto(r, currentUser.getId()))
+                .toList();
+
+        List<SpecialistReviewDto> specialistReviews = specialistReviewRepository
+                .findByUserId(currentUser.getId()).stream()
+                .map(r -> mapper.convertToSpecialistReviewDto(r, currentUser.getId()))
+                .toList();
+
+        return MyReviewsDto.builder()
+                .courseReviews(courseReviews)
+                .specialistReviews(specialistReviews)
+                .build();
     }
 }

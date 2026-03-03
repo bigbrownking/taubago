@@ -7,9 +7,9 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.app.courseapp.dto.request.CreateRatingRequest;
 import org.app.courseapp.dto.request.CreateReviewRequest;
-import org.app.courseapp.dto.response.CourseRatingStatsDto;
-import org.app.courseapp.dto.response.CourseReviewDto;
-import org.app.courseapp.dto.response.ReviewDto;
+import org.app.courseapp.dto.request.CreateSpecialistReviewRequest;
+import org.app.courseapp.dto.request.UpdateReviewRequest;
+import org.app.courseapp.dto.response.*;
 import org.app.courseapp.service.RatingService;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -111,5 +111,51 @@ public class RatingController {
     public ResponseEntity<Boolean> hasUserWrittenReviewText(@PathVariable Long courseId) {
         boolean hasReviewText = ratingService.hasUserReviewedCourse(courseId);
         return ResponseEntity.ok(hasReviewText);
+    }
+
+    @PostMapping("/specialists/review")
+    @Operation(summary = "Review a specialist")
+    public ResponseEntity<SpecialistReviewDto> reviewSpecialist(
+            @Valid @RequestBody CreateSpecialistReviewRequest request) {
+        return ResponseEntity.ok(ratingService.reviewSpecialist(request));
+    }
+
+    @PutMapping("/specialists/review/{reviewId}")
+    @Operation(summary = "Update specialist review")
+    public ResponseEntity<Void> updateSpecialistReview(
+            @PathVariable Long reviewId,
+            @Valid @RequestBody UpdateReviewRequest request) {
+        ratingService.updateSpecialistReview(reviewId, request);
+        return ResponseEntity.ok().build();
+    }
+
+    @DeleteMapping("/specialists/review/{reviewId}")
+    @Operation(summary = "Delete specialist review")
+    public ResponseEntity<Void> deleteSpecialistReview(@PathVariable Long reviewId) {
+        ratingService.deleteSpecialistReview(reviewId);
+        return ResponseEntity.noContent().build();
+    }
+
+    @GetMapping("/specialists/{specialistId}/reviews")
+    @Operation(summary = "Get specialist reviews")
+    public ResponseEntity<Page<SpecialistReviewDto>> getSpecialistReviews(
+            @PathVariable Long specialistId,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size) {
+        return ResponseEntity.ok(ratingService.getSpecialistReviews(specialistId, PageRequest.of(page, size)));
+    }
+
+    @PutMapping("/course/review/{reviewId}")
+    @Operation(summary = "Update course review")
+    public ResponseEntity<ReviewDto> updateCourseReview(
+            @PathVariable Long reviewId,
+            @Valid @RequestBody UpdateReviewRequest request) {
+        return ResponseEntity.ok(ratingService.updateCourseReview(reviewId, request));
+    }
+
+    @GetMapping("/my")
+    @Operation(summary = "Get my reviews (courses + specialists)")
+    public ResponseEntity<MyReviewsDto> getMyReviews() {
+        return ResponseEntity.ok(ratingService.getMyReviews());
     }
 }

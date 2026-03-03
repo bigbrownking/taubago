@@ -9,13 +9,11 @@ import java.util.Optional;
 
 @Repository
 public interface ReviewLikeRepository extends JpaRepository<ReviewLike, Long> {
+    // course
+    Optional<ReviewLike> findByUserIdAndCourseReviewId(Long userId, Long courseReviewId);
+    boolean existsByUserIdAndCourseReviewId(Long userId, Long courseReviewId);
 
-
-    boolean existsByUserIdAndReviewId(Long userId, Long reviewId);
-
-    Optional<ReviewLike> findByUserIdAndReviewId(Long userId, Long reviewId);
-
-    Long countByReviewId(Long reviewId);
-
-    List<ReviewLike> findByUserId(Long userId);
+    // specialist
+    Optional<ReviewLike> findByUserIdAndSpecialistReviewId(Long userId, Long specialistReviewId);
+    boolean existsByUserIdAndSpecialistReviewId(Long userId, Long specialistReviewId);
 }
