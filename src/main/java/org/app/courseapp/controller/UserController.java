@@ -40,7 +40,6 @@ public class UserController {
             @RequestParam String name,
             @RequestParam String surname,
             @RequestParam String phoneNumber,
-            @RequestParam String pasword,
             @RequestParam(value = "photo", required = false) MultipartFile photo,
             Authentication authentication) throws IOException {
         log.info("Updating profile for {}", authentication.getName());
@@ -49,7 +48,6 @@ public class UserController {
         request.setName(name);
         request.setSurname(surname);
         request.setPhoneNumber(phoneNumber);
-        request.setPassword(pasword);
 
         return ResponseEntity.ok(userService.updateMyProfile(request, photo));
     }

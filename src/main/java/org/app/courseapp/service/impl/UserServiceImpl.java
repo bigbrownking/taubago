@@ -81,9 +81,6 @@ public class UserServiceImpl implements UserService {
         currentUser.setName(request.getName());
         currentUser.setSurname(request.getSurname());
         currentUser.setPhoneNumber(request.getPhoneNumber());
-        if (request.getPassword() != null && !request.getPassword().isBlank()) {
-            currentUser.setPassword(passwordEncoder.encode(request.getPassword()));
-        }
         userRepository.save(currentUser);
 
 
