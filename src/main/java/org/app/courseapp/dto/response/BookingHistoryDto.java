@@ -13,6 +13,8 @@ import java.time.LocalTime;
 public class BookingHistoryDto {
     private Long bookingId;
     private Long specialistId;
+    private String specialistProfilePictureUrl;
+    private String specialistProfession;
     private String specialistName;
     private LocalDate date;
     private LocalTime time;

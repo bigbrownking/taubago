@@ -415,6 +415,8 @@ public class Mapper {
                 .bookingId(booking.getId())
                 .specialistId(s.getId())
                 .specialistName("Др. " + s.getName() + " " + s.getSurname())
+                .specialistProfession(s.getProfession())
+                .specialistProfilePictureUrl(minioService.getPresignedUrl(MinioBucket.AVATAR, s.getProfilePictureUrl(), 2))
                 .date(booking.getSlot().getDate())
                 .time(booking.getSlot().getTime())
                 .bookedAt(booking.getBookedAt())
