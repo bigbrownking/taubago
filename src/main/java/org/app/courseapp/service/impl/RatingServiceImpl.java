@@ -96,27 +96,15 @@ public class RatingServiceImpl implements RatingService {
         Course course = courseRepository.findById(request.getCourseId())
                 .orElseThrow(() -> new RuntimeException("Course not found"));
 
-        Optional<CourseReview> existingReview = reviewRepository
-                .findByUserIdAndCourseId(currentUser.getId(), request.getCourseId());
+        CourseReview review = new CourseReview();
+        review.setUser(currentUser);
+        review.setCourse(course);
+        review.setRating(request.getRating());
+        review.setReviewText(request.getReviewText());
+        review.setLikeCount(0);
 
-        CourseReview review;
-        if (existingReview.isPresent()) {
-            review = existingReview.get();
-            review.setRating(request.getRating());
-            review.setReviewText(request.getReviewText());
-            log.info("Parent {} updated review for course {}", currentUser.getEmail(), course.getTitle());
-        } else {
-            review = new CourseReview();
-            review.setUser(currentUser);
-            review.setCourse(course);
-            review.setRating(request.getRating());
-            review.setReviewText(request.getReviewText());
-            review.setLikeCount(0);
-            log.info("Parent {} created review for course {}", currentUser.getEmail(), course.getTitle());
-        }
-
-        review = reviewRepository.save(review);
-        return mapper.convertToReviewDto(review, currentUser.getId());
+        log.info("Parent {} created review for course {}", currentUser.getEmail(), course.getTitle());
+        return mapper.convertToReviewDto(reviewRepository.save(review), currentUser.getId());
     }
 
     @Override
@@ -327,27 +315,17 @@ public class RatingServiceImpl implements RatingService {
         Specialist specialist = (Specialist) userRepository.findById(request.getSpecialistId())
                 .orElseThrow(() -> new RuntimeException("Specialist not found"));
 
-        Optional<SpecialistReview> existing = specialistReviewRepository
-                .findByUserIdAndSpecialistId(currentUser.getId(), request.getSpecialistId());
+        SpecialistReview review = SpecialistReview.builder()
+                .user(currentUser)
+                .specialist(specialist)
+                .rating(request.getRating())
+                .reviewText(request.getReviewText())
+                .likeCount(0)
+                .build();
 
-        SpecialistReview review;
-        if (existing.isPresent()) {
-            review = existing.get();
-            review.setRating(request.getRating());
-            review.setReviewText(request.getReviewText());
-        } else {
-            review = SpecialistReview.builder()
-                    .user(currentUser)
-                    .specialist(specialist)
-                    .rating(request.getRating())
-                    .reviewText(request.getReviewText())
-                    .likeCount(0)
-                    .build();
-        }
-
+        log.info("Parent {} created review for specialist {}", currentUser.getEmail(), specialist.getEmail());
         return mapper.convertToSpecialistReviewDto(specialistReviewRepository.save(review), currentUser.getId());
     }
-
     @Override
     @Transactional
     public void updateSpecialistReview(Long reviewId, UpdateReviewRequest request) {
