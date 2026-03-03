@@ -20,7 +20,7 @@ import org.springframework.web.bind.annotation.*;
 import java.util.List;
 
 @RestController
-@RequestMapping("/api/ratings")
+@RequestMapping("/ratings")
 @RequiredArgsConstructor
 @Slf4j
 @Tag(name = "Ratings & Reviews", description = "APIs for course ratings and reviews")
