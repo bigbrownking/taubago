@@ -2,6 +2,7 @@ package org.app.courseapp.service.impl;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.app.courseapp.config.minio.MinioBucket;
 import org.app.courseapp.config.minio.MinioProperties;
 import org.app.courseapp.dto.response.VideoDto;
 import org.app.courseapp.model.*;
@@ -126,7 +127,7 @@ public class VideoServiceImpl implements VideoService {
             throw new RuntimeException("Access denied");
         }
 
-        minioService.deleteFile(video.getObjectKey());
+        minioService.deleteFile(MinioBucket.VIDEO, video.getObjectKey());
         videoRepository.delete(video);
     }
 
@@ -171,14 +172,14 @@ public class VideoServiceImpl implements VideoService {
                     file.getOriginalFilename()
             );
 
-            minioService.uploadFile(objectKey, file.getInputStream(), file.getContentType(), file.getSize());
+            minioService.uploadFile(MinioBucket.VIDEO, objectKey, file.getInputStream(), file.getContentType(), file.getSize());
 
             Video video = Video.builder()
                     .title(title)
                     .type(VideoType.LESSON)
                     .category(category)
                     .objectKey(objectKey)
-                    .bucketName(minioProperties.getBucket())
+                    .bucketName(MinioBucket.VIDEO.name())
                     .fileSizeBytes(file.getSize())
                     .contentType(file.getContentType())
                     .lesson(lesson)

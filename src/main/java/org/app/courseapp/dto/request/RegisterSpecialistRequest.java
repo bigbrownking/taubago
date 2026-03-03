@@ -16,7 +16,6 @@ public class RegisterSpecialistRequest {
     private String password;
     private String phoneNumber;
     private Integer experienceYears;
-    private String photoUrl;
     private String telegramUrl;
     private boolean hasFreeSession;
     private Integer pricePerHour;

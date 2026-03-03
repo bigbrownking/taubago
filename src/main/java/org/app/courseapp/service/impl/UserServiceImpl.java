@@ -162,12 +162,12 @@ public class UserServiceImpl implements UserService {
                 .password(passwordEncoder.encode(request.getPassword()))
                 .phoneNumber(request.getPhoneNumber())
                 .experienceYears(request.getExperienceYears())
-                .photoUrl(request.getPhotoUrl())
                 .telegramUrl(request.getTelegramUrl())
                 .hasFreeSession(request.isHasFreeSession())
                 .pricePerHour(request.getPricePerHour())
                 .rating(request.getRating())
                 .specializations(specializations)
+                .sessionCount(0)
                 .roles(Set.of(userRoleRepository.findByName("ROLE_SPECIALIST")
                         .orElseThrow(() -> new RuntimeException("Default role not found"))))
                 .build();

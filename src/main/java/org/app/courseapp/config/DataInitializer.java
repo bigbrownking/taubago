@@ -3,10 +3,7 @@ package org.app.courseapp.config;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.app.courseapp.model.*;
-import org.app.courseapp.model.users.Administrator;
-import org.app.courseapp.model.users.Curator;
-import org.app.courseapp.model.users.Parent;
-import org.app.courseapp.model.users.User;
+import org.app.courseapp.model.users.*;
 import org.app.courseapp.repository.*;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -44,6 +41,8 @@ public class DataInitializer implements CommandLineRunner {
 
         createParentIfNotExists(roleParent);
         createCuratorIfNotExists(roleCurator);
+        createSpecialistIfNotExists(roleSpecialist);
+
 
         createRegistrationQuestions();
         createVideoCategories();
@@ -84,6 +83,31 @@ public class DataInitializer implements CommandLineRunner {
             log.warn("    Password: Curator123!");
         } else {
             log.debug("ℹ️  Parent user already exists");
+        }
+    }
+
+    private void createSpecialistIfNotExists(UserRole specialistRole) {
+        String specialistEmail = "specialist@gmail.com";
+
+        if (!userRepository.existsByEmail(specialistEmail)) {
+            Specialist specialist = Specialist.builder()
+                    .email(specialistEmail)
+                    .name("Specialist")
+                    .surname("Specialist")
+                    .password(passwordEncoder.encode("Specialist123!"))
+                    .active(true)
+                    .deleted(false)
+                    .sessionCount(0)
+                    .roles(new HashSet<>(Set.of(specialistRole)))
+                    .build();
+
+            userRepository.save(specialist);
+            log.info("✅ Created specialist user: {}", specialistEmail);
+            log.warn("⚠️  Default specialist credentials:");
+            log.warn("    Email: {}", specialistEmail);
+            log.warn("    Password: Specialist123!");
+        } else {
+            log.debug("ℹ️  Specialist user already exists");
         }
     }
     private void createParentIfNotExists(UserRole parentRole) {

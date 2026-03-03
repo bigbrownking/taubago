@@ -1,6 +1,7 @@
 package org.app.courseapp.util;
 
 import lombok.RequiredArgsConstructor;
+import org.app.courseapp.config.minio.MinioBucket;
 import org.app.courseapp.dto.response.*;
 import org.app.courseapp.dto.response.userProfile.*;
 import org.app.courseapp.model.*;
@@ -144,7 +145,7 @@ public class Mapper {
     }
 
     public VideoDto convertVideoToDto(Video video, Long userId) {
-        String videoUrl = minioService.getPresignedUrl(video.getObjectKey(), 2);
+        String videoUrl = minioService.getPresignedUrl(MinioBucket.VIDEO, video.getObjectKey(), 2);
 
         VideoProgress progress = videoProgressRepository
                 .findByUserIdAndVideoId(userId, video.getId())
@@ -275,11 +276,21 @@ public class Mapper {
         dto.setSpecialization(specialist.getSpecializations());
         dto.setPhoneNumber(specialist.getPhoneNumber());
         dto.setExperienceYears(specialist.getExperienceYears());
-        dto.setPhotoUrl(specialist.getPhotoUrl());
+        dto.setProfilePictureUrl(specialist.getProfilePictureUrl());
         dto.setTelegramUrl(specialist.getTelegramUrl());
         dto.setHasFreeSession(specialist.isHasFreeSession());
         dto.setPricePerHour(specialist.getPricePerHour());
         dto.setRating(specialist.getRating());
+        dto.setAbout(specialist.getAbout());
+        dto.setCertificates(specialist.getCertificates().stream()
+                .map(this::convertToCertificateDto)
+                .toList());
+        dto.setEducations(specialist.getEducations().stream()       // было пропущено
+                .map(this::convertToEducationDto)
+                .toList());
+        dto.setWorkExperiences(specialist.getWorkExperiences().stream() // было пропущено
+                .map(this::convertToWorkExperienceDto)
+                .toList());
         return dto;
     }
 
@@ -347,7 +358,7 @@ public class Mapper {
                 .id(specialist.getId())
                 .name(specialist.getName())
                 .surname(specialist.getSurname())
-                .photoUrl(specialist.getPhotoUrl())
+                .profilePictureUrl(specialist.getProfilePictureUrl())
                 .phoneNumber(specialist.getPhoneNumber())
                 .rating(specialist.getRating())
                 .experienceYears(specialist.getExperienceYears())
@@ -365,15 +376,27 @@ public class Mapper {
                 .id(specialist.getId())
                 .name(specialist.getName())
                 .surname(specialist.getSurname())
-                .photoUrl(specialist.getPhotoUrl())
+                .profilePictureUrl(specialist.getProfilePictureUrl())
+                .sessionCount(specialist.getSessionCount())
+                .profession(specialist.getProfession())
                 .phoneNumber(specialist.getPhoneNumber())
                 .rating(specialist.getRating())
                 .experienceYears(specialist.getExperienceYears())
                 .hasFreeSession(specialist.isHasFreeSession())
                 .pricePerHour(specialist.getPricePerHour())
-                .telegramUrl(specialist.getTelegramUrl())
                 .specializations(specialist.getSpecializations().stream()
                         .map(Specialization::getName)
+                        .toList())
+                .telegramUrl(specialist.getTelegramUrl())
+                .about(specialist.getAbout())
+                .certificates(specialist.getCertificates().stream()
+                        .map(this::convertToCertificateDto)
+                        .toList())
+                .educations(specialist.getEducations().stream()
+                        .map(this::convertToEducationDto)
+                        .toList())
+                .workExperiences(specialist.getWorkExperiences().stream()
+                        .map(this::convertToWorkExperienceDto)
                         .toList())
                 .build();
     }
@@ -449,4 +472,36 @@ public class Mapper {
         return dto;
     }
 
+    public EducationDto convertToEducationDto(SpecialistEducation edu) {
+        return EducationDto.builder()
+                .id(edu.getId())
+                .institution(edu.getInstitution())
+                .degree(edu.getDegree())
+                .yearFrom(edu.getYearFrom())
+                .yearTo(edu.getYearTo())
+                .verified(edu.isVerified())
+                .documentUrl(edu.getDocumentUrl())
+                .build();
+    }
+
+    public WorkExperienceDto convertToWorkExperienceDto(SpecialistWorkExperience work) {
+        return WorkExperienceDto.builder()
+                .id(work.getId())
+                .organization(work.getOrganization())
+                .position(work.getPosition())
+                .yearFrom(work.getYearFrom())
+                .yearTo(work.getYearTo())
+                .current(work.isCurrent())
+                .build();
+    }
+
+    public CertificateDto convertToCertificateDto(SpecialistCertificate cert) {
+        return CertificateDto.builder()
+                .id(cert.getId())
+                .title(cert.getTitle())
+                .verified(cert.isVerified())
+                .issuedAt(cert.getIssuedAt() != null ? cert.getIssuedAt() : null)
+                .documentUrl(cert.getDocumentUrl())
+                .build();
+    }
 }

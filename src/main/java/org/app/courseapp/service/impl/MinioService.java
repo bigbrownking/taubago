@@ -2,16 +2,14 @@ package org.app.courseapp.service.impl;
 
 import io.minio.*;
 import io.minio.http.Method;
-import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.app.courseapp.config.minio.MinioBucket;
 import org.app.courseapp.config.minio.MinioProperties;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Service;
 
 import jakarta.annotation.PostConstruct;
 import java.io.InputStream;
-import java.net.URI;
-import java.net.URISyntaxException;
 import java.text.Normalizer;
 import java.util.concurrent.TimeUnit;
 
@@ -34,19 +32,33 @@ public class MinioService {
     @PostConstruct
     public void init() {
         try {
-            createBucketIfNotExists();
+            createBucketIfNotExists(minioProperties.getVideoBucket());
+            createBucketIfNotExists(minioProperties.getAvatarBucket());
+            createBucketIfNotExists(minioProperties.getDocumentBucket());
             log.info("MinIO initialized successfully");
         } catch (Exception e) {
             log.error("Failed to initialize MinIO", e);
         }
     }
 
-    public String getPresignedUrl(String objectKey, int expiryHours) {
+    // ─── Resolve bucket name by enum ──────────────────────────────────────────
+
+    private String resolveBucket(MinioBucket bucket) {
+        return switch (bucket) {
+            case VIDEO    -> minioProperties.getVideoBucket();
+            case AVATAR   -> minioProperties.getAvatarBucket();
+            case DOCUMENT -> minioProperties.getDocumentBucket();
+        };
+    }
+
+    // ─── Core operations ──────────────────────────────────────────────────────
+
+    public String getPresignedUrl(MinioBucket bucket, String objectKey, int expiryHours) {
         try {
             return publicMinioClient.getPresignedObjectUrl(
                     GetPresignedObjectUrlArgs.builder()
                             .method(Method.GET)
-                            .bucket(minioProperties.getBucket())
+                            .bucket(resolveBucket(bucket))
                             .object(objectKey)
                             .expiry(expiryHours, TimeUnit.HOURS)
                             .build()
@@ -56,46 +68,31 @@ public class MinioService {
             throw new RuntimeException("Failed to generate URL", e);
         }
     }
-    private void createBucketIfNotExists() throws Exception {
-        boolean exists = minioClient.bucketExists(
-                BucketExistsArgs.builder()
-                        .bucket(minioProperties.getBucket())
-                        .build()
-        );
 
-        if (!exists) {
-            minioClient.makeBucket(
-                    MakeBucketArgs.builder()
-                            .bucket(minioProperties.getBucket())
-                            .build()
-            );
-            log.info("Created bucket: {}", minioProperties.getBucket());
-        }
-    }
-
-    public void uploadFile(String objectKey, InputStream inputStream, String contentType, long size) {
+    public void uploadFile(MinioBucket bucket, String objectKey, InputStream inputStream,
+                           String contentType, long size) {
         String safeKey = sanitizeObjectKey(objectKey);
         try {
             minioClient.putObject(
                     PutObjectArgs.builder()
-                            .bucket(minioProperties.getBucket())
+                            .bucket(resolveBucket(bucket))
                             .object(safeKey)
                             .stream(inputStream, size, -1)
                             .contentType(contentType)
                             .build()
             );
-            log.info("Uploaded file: {}", objectKey);
+            log.info("Uploaded file: {}", safeKey);
         } catch (Exception e) {
             log.error("Failed to upload file: {}", objectKey, e);
             throw new RuntimeException("Failed to upload file", e);
         }
     }
 
-    public void deleteFile(String objectKey) {
+    public void deleteFile(MinioBucket bucket, String objectKey) {
         try {
             minioClient.removeObject(
                     RemoveObjectArgs.builder()
-                            .bucket(minioProperties.getBucket())
+                            .bucket(resolveBucket(bucket))
                             .object(objectKey)
                             .build()
             );
@@ -105,6 +102,48 @@ public class MinioService {
             throw new RuntimeException("Failed to delete file", e);
         }
     }
+
+    // ─── Key generators ───────────────────────────────────────────────────────
+
+    public String generateLessonVideoKey(Long courseId, Long lessonId,
+                                         String categoryName, String originalFilename) {
+        String path = categoryName != null ? transliterate(categoryName) : "lesson";
+        String rawKey = String.format("courses/%d/lessons/%d/%s/%d.%s",
+                courseId, lessonId, path, System.currentTimeMillis(),
+                getFileExtension(originalFilename));
+        return sanitizeObjectKey(rawKey);
+    }
+
+    public String generateHomeworkKey(Long courseId, Long lessonId,
+                                      Long userId, String originalFilename) {
+        String rawKey = String.format("courses/%d/lessons/%d/homework/user_%d_%d.%s",
+                courseId, lessonId, userId, System.currentTimeMillis(),
+                getFileExtension(originalFilename));
+        return sanitizeObjectKey(rawKey);
+    }
+    public String generateCertificateKey(Long specialistId, Long certId, String originalFilename) {
+        String rawKey = String.format("specialists/%d/certificates/%d_%d.%s",
+                specialistId, certId, System.currentTimeMillis(),
+                getFileExtension(originalFilename));
+        return sanitizeObjectKey(rawKey);
+    }
+    public String generateAvatarKey(Long userId, String originalFilename) {
+        String rawKey = String.format("avatars/user_%d_%d.%s",
+                userId, System.currentTimeMillis(),
+                getFileExtension(originalFilename));
+        return sanitizeObjectKey(rawKey);
+    }
+
+    private void createBucketIfNotExists(String bucketName) throws Exception {
+        boolean exists = minioClient.bucketExists(
+                BucketExistsArgs.builder().bucket(bucketName).build()
+        );
+        if (!exists) {
+            minioClient.makeBucket(MakeBucketArgs.builder().bucket(bucketName).build());
+            log.info("Created bucket: {}", bucketName);
+        }
+    }
+
     private String transliterate(String text) {
         if (text == null) return "";
         String lower = text.toLowerCase();
@@ -122,6 +161,7 @@ public class MinioService {
                 .replace("э", "e").replace("ю", "yu").replace("я", "ya")
                 .replace(" ", "_");
     }
+
     public String sanitizeObjectKey(String key) {
         String transliterated = transliterate(key);
         String normalized = Normalizer.normalize(transliterated, Normalizer.Form.NFD);
@@ -129,22 +169,10 @@ public class MinioService {
         normalized = normalized.replaceAll("[^a-zA-Z0-9._\\-/]", "_");
         return normalized;
     }
-    public String generateLessonVideoKey(Long courseId, Long lessonId, String categoryName, String originalFilename) {
-        log.info("categoryName raw: '{}'", categoryName);
-        String path = categoryName != null ? transliterate(categoryName) : "lesson";
-        log.info("categoryName after transliterate: '{}'", path);
-        String rawKey = String.format("courses/%d/lessons/%d/%s/%d.%s",
-                courseId, lessonId, path, System.currentTimeMillis(), getFileExtension(originalFilename));
-        return sanitizeObjectKey(rawKey);
-    }
-    public String generateHomeworkKey(Long courseId, Long lessonId, Long userId, String originalFilename) {
-        String rawKey = String.format("courses/%d/lessons/%d/homework/user_%d_%d.%s",
-                courseId, lessonId, userId, System.currentTimeMillis(), getFileExtension(originalFilename));
-        return sanitizeObjectKey(rawKey);
-    }
+
     private String getFileExtension(String filename) {
-        if (filename == null) return "mp4";
+        if (filename == null) return "bin";
         int dotIndex = filename.lastIndexOf('.');
-        return dotIndex > 0 ? filename.substring(dotIndex + 1) : "mp4";
+        return dotIndex > 0 ? filename.substring(dotIndex + 1) : "bin";
     }
 }

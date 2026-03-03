@@ -41,6 +41,9 @@ public class User {
     @Builder.Default
     private Boolean active = true;
 
+    @Column(name = "profile_picture_url")
+    private String profilePictureUrl;
+
     @Column(name = "deleted", nullable = false)
     @Builder.Default
     private Boolean deleted = false;

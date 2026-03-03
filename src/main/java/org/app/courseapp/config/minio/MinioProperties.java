@@ -12,5 +12,8 @@ public class MinioProperties {
     private String publicUrl;
     private String accessKey;
     private String secretKey;
-    private String bucket;
+
+    private String videoBucket;
+    private String avatarBucket;
+    private String documentBucket;
 }

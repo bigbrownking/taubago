@@ -178,6 +178,9 @@ public class SpecialistSlotServiceImpl implements SpecialistSlotService {
                 .build();
 
         bookingRepository.save(booking);
+        Specialist specialist = slot.getSpecialist();
+            specialist.setSessionCount(specialist.getSessionCount() + 1);
+        userRepository.save(specialist);
 
         log.info("Parent {} booked slot {} with specialist {}",
                 email, slot.getId(), slot.getSpecialist().getEmail());

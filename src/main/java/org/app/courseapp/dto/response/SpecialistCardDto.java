@@ -11,7 +11,7 @@ public class SpecialistCardDto {
     private Long id;
     private String name;
     private String surname;
-    private String photoUrl;
+    private String profilePictureUrl;
     private String phoneNumber;
     private double rating;
     private int experienceYears;

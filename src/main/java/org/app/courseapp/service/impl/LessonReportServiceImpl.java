@@ -2,6 +2,7 @@ package org.app.courseapp.service.impl;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.app.courseapp.config.minio.MinioBucket;
 import org.app.courseapp.config.minio.MinioProperties;
 import org.app.courseapp.dto.response.LessonReportDto;
 import org.app.courseapp.dto.response.ParentLessonReportFullDto;
@@ -75,6 +76,7 @@ public class LessonReportServiceImpl implements LessonReportService {
                 );
 
                 minioService.uploadFile(
+                        MinioBucket.VIDEO,
                         objectKey,
                         file.getInputStream(),
                         file.getContentType(),
@@ -86,7 +88,7 @@ public class LessonReportServiceImpl implements LessonReportService {
                         .type(VideoType.HOMEWORK)
                         .category(null)
                         .objectKey(objectKey)
-                        .bucketName(minioProperties.getBucket())
+                        .bucketName(MinioBucket.VIDEO.name())
                         .fileSizeBytes(file.getSize())
                         .contentType(file.getContentType())
                         .lesson(lesson)

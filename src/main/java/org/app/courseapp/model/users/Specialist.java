@@ -3,6 +3,9 @@ package org.app.courseapp.model.users;
 import jakarta.persistence.*;
 import lombok.*;
 import lombok.experimental.SuperBuilder;
+import org.app.courseapp.model.SpecialistCertificate;
+import org.app.courseapp.model.SpecialistEducation;
+import org.app.courseapp.model.SpecialistWorkExperience;
 import org.app.courseapp.model.Specialization;
 
 import java.util.ArrayList;
@@ -26,9 +29,6 @@ public class Specialist extends User {
     @Column(name = "experience_years")
     private Integer experienceYears;
 
-    @Column(name = "photo_url")
-    private String photoUrl;
-
     @Column(name = "telegram_url")
     private String telegramUrl;
 
@@ -40,6 +40,24 @@ public class Specialist extends User {
 
     @Column(name = "rating")
     private Double rating;
+
+    @Column(name = "about", columnDefinition = "TEXT")
+    private String about;
+
+    @Column(name = "profession")
+    private String profession;
+
+    @Column(name = "session_count", columnDefinition = "INTEGER DEFAULT 0")
+    private Integer sessionCount;
+
+    @OneToMany(mappedBy = "specialist", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<SpecialistEducation> educations = new ArrayList<>();
+
+    @OneToMany(mappedBy = "specialist", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<SpecialistWorkExperience> workExperiences = new ArrayList<>();
+
+    @OneToMany(mappedBy = "specialist", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<SpecialistCertificate> certificates = new ArrayList<>();
 
     @Builder.Default
     @ManyToMany(fetch = FetchType.LAZY)
