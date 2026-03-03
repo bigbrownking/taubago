@@ -31,6 +31,15 @@ public class User {
     @Column(unique = true, nullable = false)
     private String email;
 
+    @Column(name = "name")
+    private String name;
+
+    @Column(name = "surname")
+    private String surname;
+
+    @Column(name = "phone_number")
+    private String phoneNumber;
+
     @NotBlank
     private String password;
 

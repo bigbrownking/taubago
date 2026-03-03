@@ -26,13 +26,4 @@ public class GlobalExceptionHandler {
         problem.setTitle("Forbidden");
         return problem;
     }
-
-    @ExceptionHandler(Exception.class)
-    public ProblemDetail handleException(Exception ex) {
-        ProblemDetail problem = ProblemDetail.forStatusAndDetail(
-                HttpStatus.INTERNAL_SERVER_ERROR, "Internal server error"
-        );
-        problem.setTitle("Internal Server Error");
-        return problem;
-    }
 }

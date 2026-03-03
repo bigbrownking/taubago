@@ -20,12 +20,6 @@ import java.util.List;
 @SuperBuilder
 public class Specialist extends User {
 
-    @Column(name = "name", nullable = false)
-    private String name;
-
-    @Column(name = "surname", nullable = false)
-    private String surname;
-
     @Column(name = "experience_years")
     private Integer experienceYears;
 
@@ -67,7 +61,4 @@ public class Specialist extends User {
             inverseJoinColumns = @JoinColumn(name = "specialization_id")
     )
     private List<Specialization> specializations = new ArrayList<>();
-
-    @Column(name = "phone_number")
-    private String phoneNumber;
 }

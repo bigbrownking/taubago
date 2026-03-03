@@ -9,9 +9,13 @@ import org.app.courseapp.dto.request.ChangePasswordRequest;
 import org.app.courseapp.dto.request.UpdateProfileRequest;
 import org.app.courseapp.dto.response.userProfile.BaseUserProfileDto;
 import org.app.courseapp.service.UserService;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
+
+import java.io.IOException;
 
 @Slf4j
 @RestController
@@ -30,14 +34,24 @@ public class UserController {
         return ResponseEntity.ok(userService.getMyProfile());
     }
 
-    @PutMapping("/me")
-    @Operation(summary = "Update my profile", description = "Update current user's profile information")
+    @PutMapping(value = "/me", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    @Operation(summary = "Update my profile")
     public ResponseEntity<BaseUserProfileDto> updateMyProfile(
-            @Valid @RequestBody UpdateProfileRequest request,
-            Authentication authentication) {
-        String email = authentication.getName();
-        log.info("Updating profile for {}", email);
-        return ResponseEntity.ok(userService.updateMyProfile(request));
+            @RequestParam String name,
+            @RequestParam String surname,
+            @RequestParam String phoneNumber,
+            @RequestParam String pasword,
+            @RequestParam(value = "photo", required = false) MultipartFile photo,
+            Authentication authentication) throws IOException {
+        log.info("Updating profile for {}", authentication.getName());
+
+        UpdateProfileRequest request = new UpdateProfileRequest();
+        request.setName(name);
+        request.setSurname(surname);
+        request.setPhoneNumber(phoneNumber);
+        request.setPassword(pasword);
+
+        return ResponseEntity.ok(userService.updateMyProfile(request, photo));
     }
 
     @DeleteMapping("/me")

@@ -13,16 +13,7 @@ import lombok.experimental.SuperBuilder;
 @Table(name = "curators")
 @Getter
 @Setter
-@NoArgsConstructor
-@AllArgsConstructor
 @SuperBuilder
+@NoArgsConstructor
 public class Curator extends User{
-    @Column(name = "name", nullable = false)
-    private String name;
-
-    @Column(name = "surname", nullable = false)
-    private String surname;
-
-    @Column(name = "phone_number")
-    private String phoneNumber;
 }

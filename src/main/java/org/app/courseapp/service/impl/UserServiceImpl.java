@@ -2,6 +2,7 @@ package org.app.courseapp.service.impl;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.app.courseapp.config.minio.MinioBucket;
 import org.app.courseapp.dto.request.ChangePasswordRequest;
 import org.app.courseapp.dto.request.RegisterCuratorRequest;
 import org.app.courseapp.dto.request.RegisterSpecialistRequest;
@@ -19,7 +20,9 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.multipart.MultipartFile;
 
+import java.io.IOException;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.HashSet;
@@ -37,6 +40,7 @@ public class UserServiceImpl implements UserService {
     private final SpecializationRepository specializationRepository;
     private final Mapper mapper;
     private final PasswordEncoder passwordEncoder;
+    private final MinioService minioService;
 
     @Override
     public User getCurrentUser() {
@@ -62,50 +66,26 @@ public class UserServiceImpl implements UserService {
 
     @Override
     @Transactional
-    public BaseUserProfileDto updateMyProfile(UpdateProfileRequest request) {
+    public BaseUserProfileDto updateMyProfile(UpdateProfileRequest request, MultipartFile photo) throws IOException {
         User currentUser = getCurrentUser();
 
-        if (currentUser instanceof Parent parent) {
-            parent.setName(request.getName());
-            parent.setSurname(request.getSurname());
-            parent.setPhoneNumber(request.getPhoneNumber());
-
-            if (request.getPassword() != null && !request.getPassword().isBlank()) {
-                parent.setPassword(passwordEncoder.encode(request.getPassword()));
+        if (photo != null && !photo.isEmpty()) {
+            if (currentUser.getProfilePictureUrl() != null) {
+                minioService.deleteFile(MinioBucket.AVATAR, currentUser.getProfilePictureUrl());
             }
-
-            userRepository.save(parent);
-            log.info("Parent profile updated: {}", parent.getEmail());
-
-        } else if (currentUser instanceof Administrator admin) {
-            admin.setName(request.getName());
-            admin.setSurname(request.getSurname());
-            admin.setPhoneNumber(request.getPhoneNumber());
-
-            if (request.getPassword() != null && !request.getPassword().isBlank()) {
-                admin.setPassword(passwordEncoder.encode(request.getPassword()));
-            }
-
-            userRepository.save(admin);
-            log.info("Administrator profile updated: {}", admin.getEmail());
-
-        } else if (currentUser instanceof Specialist specialist) {
-            if (request.getSpecializations() != null || !request.getSpecializations().isEmpty()) {
-                List<Specialization> specializations = specializationRepository.findAllById(request.getSpecializations());
-                specialist.setSpecializations(specializations);
-            }
-
-            specialist.setName(request.getName());
-            specialist.setSurname(request.getSurname());
-            specialist.setPhoneNumber(request.getPhoneNumber());
-
-            if (request.getPassword() != null && !request.getPassword().isBlank()) {
-                specialist.setPassword(passwordEncoder.encode(request.getPassword()));
-            }
-
-            userRepository.save(specialist);
-            log.info("Specialist profile updated: {}", specialist.getEmail());
+            String key = minioService.generateAvatarKey(currentUser.getId(), photo.getOriginalFilename());
+            minioService.uploadFile(MinioBucket.AVATAR, key, photo.getInputStream(), photo.getContentType(), photo.getSize());
+            currentUser.setProfilePictureUrl(key);
         }
+
+        currentUser.setName(request.getName());
+        currentUser.setSurname(request.getSurname());
+        currentUser.setPhoneNumber(request.getPhoneNumber());
+        if (request.getPassword() != null && !request.getPassword().isBlank()) {
+            currentUser.setPassword(passwordEncoder.encode(request.getPassword()));
+        }
+        userRepository.save(currentUser);
+
 
         return mapper.convertToProfileDto(currentUser);
     }

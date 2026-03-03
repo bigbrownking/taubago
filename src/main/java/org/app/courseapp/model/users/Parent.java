@@ -17,15 +17,6 @@ import java.util.Set;
 @SuperBuilder
 public class Parent extends User {
 
-    @Column(name = "name", nullable = false)
-    private String name;
-
-    @Column(name = "surname", nullable = false)
-    private String surname;
-
-    @Column(name = "phone_number")
-    private String phoneNumber;
-
     @Column(name = "profile_picture_url", columnDefinition = "TEXT")
     private String profilePictureUrl;
 

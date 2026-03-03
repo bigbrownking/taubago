@@ -33,7 +33,4 @@ public class UpdateProfileRequest {
             message = "Password must contain at least one uppercase, lowercase, number, and special character"
     )
     private String password;
-
-    @Nullable
-    private List<Long> specializations;
 }

@@ -216,7 +216,7 @@ public class Mapper {
         dto.setName(parent.getName());
         dto.setSurname(parent.getSurname());
         dto.setPhoneNumber(parent.getPhoneNumber());
-        dto.setProfilePictureUrl(parent.getProfilePictureUrl());
+        dto.setProfilePictureUrl(minioService.getPresignedUrl(MinioBucket.AVATAR, parent.getProfilePictureUrl(), 2));
 
         // Children
         List<ChildDto> children = parent.getChildren().stream()
@@ -276,7 +276,7 @@ public class Mapper {
         dto.setSpecialization(specialist.getSpecializations());
         dto.setPhoneNumber(specialist.getPhoneNumber());
         dto.setExperienceYears(specialist.getExperienceYears());
-        dto.setProfilePictureUrl(specialist.getProfilePictureUrl());
+        dto.setProfilePictureUrl(minioService.getPresignedUrl(MinioBucket.AVATAR, specialist.getProfilePictureUrl(), 2));
         dto.setTelegramUrl(specialist.getTelegramUrl());
         dto.setHasFreeSession(specialist.isHasFreeSession());
         dto.setPricePerHour(specialist.getPricePerHour());
