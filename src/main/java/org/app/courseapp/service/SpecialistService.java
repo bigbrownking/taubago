@@ -14,6 +14,7 @@ public interface SpecialistService {
     List<SpecialistCardDto> getAllSpecialists(Long specializationId);
     SpecialistDetailDto getSpecialistById(Long id);
     void updateAbout(UpdateAboutRequest request);
+    void updateProfession(String profession);
     EducationDto addEducation(AddEducationRequest request);
     void deleteEducation(Long educationId);
     WorkExperienceDto addWorkExperience(AddWorkExperienceRequest request);

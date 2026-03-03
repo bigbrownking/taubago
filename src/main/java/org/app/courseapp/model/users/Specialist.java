@@ -44,12 +44,15 @@ public class Specialist extends User {
     @Column(name = "session_count", columnDefinition = "INTEGER DEFAULT 0")
     private Integer sessionCount;
 
+    @Builder.Default
     @OneToMany(mappedBy = "specialist", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<SpecialistEducation> educations = new ArrayList<>();
 
+    @Builder.Default
     @OneToMany(mappedBy = "specialist", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<SpecialistWorkExperience> workExperiences = new ArrayList<>();
 
+    @Builder.Default
     @OneToMany(mappedBy = "specialist", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<SpecialistCertificate> certificates = new ArrayList<>();
 

@@ -63,7 +63,7 @@ public class ExpertController {
         return ResponseEntity.ok(slotService.bookSlot(request, authentication.getName()));
     }
 
-    @PutMapping("/me/about")
+    @PatchMapping("/me/about")
     @PreAuthorize("hasRole('ROLE_SPECIALIST')")
     @Operation(summary = "Update specialist about section")
     public ResponseEntity<Void> updateAbout(@Valid @RequestBody UpdateAboutRequest request) {
@@ -71,6 +71,13 @@ public class ExpertController {
         return ResponseEntity.ok().build();
     }
 
+    @PatchMapping("/me/profession")
+    @PreAuthorize("hasRole('ROLE_SPECIALIST')")
+    @Operation(summary = "Update specialist profession")
+    public ResponseEntity<Void> updateProfession(@RequestParam String profession) {
+        specialistService.updateProfession(profession);
+        return ResponseEntity.ok().build();
+    }
     // ─── Specialist: education ────────────────────────────────────────────────
 
     @PostMapping("/me/education")

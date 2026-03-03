@@ -72,6 +72,12 @@ public class SpecialistServiceImpl implements SpecialistService {
         specialist.setAbout(request.getAbout());
         specialistRepository.save(specialist);
     }
+    // --- Profession ---
+    public void updateProfession(String profession) {
+        Specialist specialist = getCurrentSpecialist();
+        specialist.setProfession(profession);
+        specialistRepository.save(specialist);
+    }
 
     // --- Education ---
     public EducationDto addEducation(AddEducationRequest request) {

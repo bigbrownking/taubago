@@ -14,7 +14,7 @@ public class GlobalExceptionHandler {
         ProblemDetail problem = ProblemDetail.forStatusAndDetail(
                 HttpStatus.BAD_REQUEST, ex.getMessage()
         );
-        problem.setTitle("Bad Request");
+        problem.setTitle("Oops! Something went wrong");
         return problem;
     }
 
