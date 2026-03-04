@@ -537,7 +537,8 @@ public class Mapper {
                 .id(session.getId())
                 .specialistId(s.getId())
                 .specialistName(s.getName() + " " + s.getSurname())
-                .specialistAvatar(s.getProfilePictureUrl() != null
+                .specialistProfession(s.getProfession())
+                .profilePictureUrl(s.getProfilePictureUrl() != null
                         ? minioService.getPresignedUrl(MinioBucket.AVATAR, s.getProfilePictureUrl(), 2)
                         : null)
                 .title(session.getTitle())
