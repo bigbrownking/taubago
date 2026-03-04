@@ -17,9 +17,6 @@ import java.util.Set;
 @SuperBuilder
 public class Parent extends User {
 
-    @Column(name = "profile_picture_url", columnDefinition = "TEXT")
-    private String profilePictureUrl;
-
     @OneToMany(mappedBy = "parent", cascade = CascadeType.ALL, orphanRemoval = true)
     @Builder.Default
     private Set<Child> children = new HashSet<>();

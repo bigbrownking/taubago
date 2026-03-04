@@ -78,9 +78,15 @@ public class UserServiceImpl implements UserService {
             currentUser.setProfilePictureUrl(key);
         }
 
-        currentUser.setName(request.getName());
-        currentUser.setSurname(request.getSurname());
-        currentUser.setPhoneNumber(request.getPhoneNumber());
+        if(request.getName() != null) {
+            currentUser.setName(request.getName());
+        }
+        if(request.getSurname() != null) {
+            currentUser.setSurname(request.getSurname());
+        }
+        if (request.getPhoneNumber() != null) {
+            currentUser.setPhoneNumber(request.getPhoneNumber());
+        }
         userRepository.save(currentUser);
 
 

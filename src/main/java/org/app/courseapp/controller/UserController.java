@@ -37,9 +37,9 @@ public class UserController {
     @PutMapping(value = "/me", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     @Operation(summary = "Update my profile")
     public ResponseEntity<BaseUserProfileDto> updateMyProfile(
-            @RequestParam String name,
-            @RequestParam String surname,
-            @RequestParam String phoneNumber,
+            @RequestParam(required = false) String name,
+            @RequestParam(required = false) String surname,
+            @RequestParam(required = false) String phoneNumber,
             @RequestParam(value = "photo", required = false) MultipartFile photo,
             Authentication authentication) throws IOException {
         log.info("Updating profile for {}", authentication.getName());
