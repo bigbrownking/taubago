@@ -14,11 +14,11 @@ public class SpecialistDetailDto {
     private String profilePictureUrl;
     private String phoneNumber;
     private String profession;
-    private int sessionCount;
-    private double rating;
-    private int experienceYears;
+    private Integer sessionCount;
+    private Double rating;
+    private Integer experienceYears;
     private boolean hasFreeSession;
-    private int pricePerHour;
+    private Integer pricePerHour;
     private List<String> specializations;
     private String telegramUrl;
     private String about;
