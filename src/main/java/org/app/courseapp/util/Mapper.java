@@ -531,4 +531,20 @@ public class Mapper {
                         : null)
                 .build();
     }
+    public GroupSessionDto convertToGroupSessionDto(GroupSession session) {
+        Specialist s = session.getSpecialist();
+        return GroupSessionDto.builder()
+                .id(session.getId())
+                .specialistId(s.getId())
+                .specialistName(s.getName() + " " + s.getSurname())
+                .specialistAvatar(s.getProfilePictureUrl() != null
+                        ? minioService.getPresignedUrl(MinioBucket.AVATAR, s.getProfilePictureUrl(), 2)
+                        : null)
+                .title(session.getTitle())
+                .description(session.getDescription())
+                .telegramLink(session.getTelegramLink())
+                .scheduledAt(session.getScheduledAt())
+                .maxParticipants(session.getMaxParticipants())
+                .build();
+    }
 }
