@@ -12,11 +12,12 @@ public class SpecialistCardDto {
     private String name;
     private String surname;
     private String profilePictureUrl;
+    private String profession;
     private String phoneNumber;
-    private double rating;
-    private int experienceYears;
+    private Double rating;
+    private Integer experienceYears;
     private boolean hasFreeSession;
-    private int pricePerHour;
+    private Integer pricePerHour;
     private List<String> specializations;
     private String telegramUrl;
 }

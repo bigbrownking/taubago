@@ -359,6 +359,7 @@ public class Mapper {
                 .name(specialist.getName())
                 .surname(specialist.getSurname())
                 .profilePictureUrl(specialist.getProfilePictureUrl())
+                .profession(specialist.getProfession())
                 .phoneNumber(specialist.getPhoneNumber())
                 .rating(specialist.getRating())
                 .experienceYears(specialist.getExperienceYears())
