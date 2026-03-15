@@ -75,13 +75,7 @@ public class LessonReportServiceImpl implements LessonReportService {
                         file.getOriginalFilename()
                 );
 
-                minioService.uploadFile(
-                        MinioBucket.VIDEO,
-                        objectKey,
-                        file.getInputStream(),
-                        file.getContentType(),
-                        file.getSize()
-                );
+                minioService.uploadVideo(MinioBucket.VIDEO, objectKey, file.getInputStream());
 
                 Video video = Video.builder()
                         .title("Домашнее задание - День " + lesson.getDayNumber())

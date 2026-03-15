@@ -23,6 +23,7 @@ public class SignUpResponse {
     private List<ChildInfo> children;
     private Integer totalAnswers;
     private Integer positiveAnswers;
+    private DevelopmentVerdict verdict;
 
     @Getter
     @Setter
@@ -37,7 +38,8 @@ public class SignUpResponse {
         private String diagnosis;
     }
 
-    public static SignUpResponse fromEntity(Parent parent, Integer totalAnswers, Integer positiveAnswers) {
+    public static SignUpResponse fromEntity(Parent parent, Integer totalAnswers,
+                                            Integer positiveAnswers, DevelopmentVerdict verdict) {
         return SignUpResponse.builder()
                 .id(parent.getId())
                 .email(parent.getEmail())
@@ -56,6 +58,7 @@ public class SignUpResponse {
                         .collect(Collectors.toList()))
                 .totalAnswers(totalAnswers)
                 .positiveAnswers(positiveAnswers)
+                .verdict(verdict)
                 .message("Parent registered successfully")
                 .build();
     }

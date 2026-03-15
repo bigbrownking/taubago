@@ -13,6 +13,8 @@ FROM eclipse-temurin:17-jre-alpine
 
 WORKDIR /app
 
+RUN apk add --no-cache ffmpeg
+
 COPY --from=build /app/target/*.jar app.jar
 
 EXPOSE 5908

@@ -3,6 +3,7 @@ package org.app.courseapp.service.impl;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.app.courseapp.dto.request.*;
+import org.app.courseapp.dto.response.DevelopmentVerdict;
 import org.app.courseapp.dto.response.JwtResponse;
 import org.app.courseapp.dto.response.PasswordResetResponse;
 import org.app.courseapp.dto.response.SignUpResponse;
@@ -37,6 +38,7 @@ public class AuthServiceImpl implements AuthService {
     private final PasswordEncoder passwordEncoder;
     private final AuthenticationManager authenticationManager;
     private final DiagnosisRepository diagnosisRepository;
+    private final DevelopmentAnalysisService developmentAnalysisService;
     private final RegistrationQuestionRepository registrationQuestionRepository;
     private final RegistrationAnswerRepository registrationAnswerRepository;
     private final JwtTokenUtil jwtTokenUtil;
@@ -119,10 +121,12 @@ public class AuthServiceImpl implements AuthService {
         // Подсчитываем статистику ответов
         long positiveAnswers = answers.stream().filter(RegistrationAnswer::getAnswer).count();
 
+        DevelopmentVerdict verdict = developmentAnalysisService.analyze(answers);
+
         log.info("Parent created successfully with ID: {}. Answers: {}/{} positive",
                 savedParent.getId(), positiveAnswers, answers.size());
 
-        return SignUpResponse.fromEntity(savedParent, answers.size(), (int) positiveAnswers);
+        return SignUpResponse.fromEntity(savedParent, answers.size(), (int) positiveAnswers, verdict);
     }
     @Override
     public JwtResponse login(LoginRequest request) {

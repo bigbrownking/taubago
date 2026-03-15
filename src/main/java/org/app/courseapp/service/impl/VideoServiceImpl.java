@@ -172,7 +172,7 @@ public class VideoServiceImpl implements VideoService {
                     file.getOriginalFilename()
             );
 
-            minioService.uploadFile(MinioBucket.VIDEO, objectKey, file.getInputStream(), file.getContentType(), file.getSize());
+            minioService.uploadVideo(MinioBucket.VIDEO, objectKey, file.getInputStream());
 
             Video video = Video.builder()
                     .title(title)

@@ -9,7 +9,14 @@ import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Service;
 
 import jakarta.annotation.PostConstruct;
+
+import java.io.BufferedReader;
+import java.io.IOException;
 import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.StandardCopyOption;
 import java.text.Normalizer;
 import java.util.concurrent.TimeUnit;
 
@@ -87,7 +94,78 @@ public class MinioService {
             throw new RuntimeException("Failed to upload file", e);
         }
     }
+    public void uploadVideo(MinioBucket bucket, String objectKey, InputStream inputStream) {
+        Path tempInput = null;
+        Path compressed = null;
 
+        try {
+            tempInput = Files.createTempFile("upload_", ".mp4");
+            Files.copy(inputStream, tempInput, StandardCopyOption.REPLACE_EXISTING);
+
+            compressed = compressVideo(tempInput);
+
+            String safeKey = sanitizeObjectKey(objectKey);
+            minioClient.uploadObject(
+                    UploadObjectArgs.builder()
+                            .bucket(resolveBucket(bucket))
+                            .object(safeKey)
+                            .filename(compressed.toString())
+                            .contentType("video/mp4")
+                            .build()
+            );
+            log.info("Uploaded compressed video: {}", safeKey);
+
+        } catch (Exception e) {
+            log.error("Failed to upload video: {}", objectKey, e);
+            throw new RuntimeException("Failed to upload video", e);
+        } finally {
+            deleteTempFile(tempInput);
+            deleteTempFile(compressed);
+        }
+    }
+    private Path compressVideo(Path inputPath) throws IOException, InterruptedException {
+        Path outputPath = Files.createTempFile("compressed_", ".mp4");
+
+        ProcessBuilder pb = new ProcessBuilder(
+                "ffmpeg",
+                "-i", inputPath.toString(),
+                "-vcodec", "libx264",
+                "-crf", "23",
+                "-preset", "slow",
+                "-acodec", "aac",
+                "-b:a", "128k",
+                "-movflags", "+faststart",
+                "-y",
+                outputPath.toString()
+        );
+        pb.redirectErrorStream(true);
+
+        Process process = pb.start();
+        try (BufferedReader reader = new BufferedReader(
+                new InputStreamReader(process.getInputStream()))) {
+            reader.lines().forEach(line -> log.debug("FFmpeg: {}", line));
+        }
+
+        int exitCode = process.waitFor();
+        if (exitCode != 0) {
+            Files.deleteIfExists(outputPath);
+            throw new RuntimeException("FFmpeg failed with exit code: " + exitCode);
+        }
+
+        log.info("Video compressed: {} MB → {} MB",
+                Files.size(inputPath) / 1_048_576,
+                Files.size(outputPath) / 1_048_576);
+
+        return outputPath;
+    }
+
+    private void deleteTempFile(Path path) {
+        try {
+            if (path != null) Files.deleteIfExists(path);
+        } catch (IOException e) {
+            log.warn("Failed to delete temp file: {}", path, e);
+        }
+    }
     public void deleteFile(MinioBucket bucket, String objectKey) {
         try {
             minioClient.removeObject(

@@ -9,10 +9,12 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.app.courseapp.dto.request.*;
+import org.app.courseapp.dto.response.DevelopmentVerdict;
 import org.app.courseapp.dto.response.JwtResponse;
 import org.app.courseapp.dto.response.PasswordResetResponse;
 import org.app.courseapp.dto.response.SignUpResponse;
 import org.app.courseapp.service.AuthService;
+import org.app.courseapp.service.impl.DevelopmentAnalysisService;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -23,6 +25,7 @@ import org.springframework.web.bind.annotation.*;
 @Tag(name = "Authentication Management", description = "APIs for auth management operations")
 public class AuthController {
     private final AuthService authService;
+    private final DevelopmentAnalysisService developmentAnalysisService;
 
     @PostMapping("/signup")
     @Operation(summary = "Register a new user", description = "Creates a new user account with provided information")
@@ -159,5 +162,10 @@ public class AuthController {
 
         boolean isValid = authService.validateResetToken(token);
         return ResponseEntity.ok(isValid);
+    }
+
+    @GetMapping("/ping")
+    public ResponseEntity<DevelopmentVerdict> ping() {
+        return ResponseEntity.ok(developmentAnalysisService.analyzeTest());
     }
 }

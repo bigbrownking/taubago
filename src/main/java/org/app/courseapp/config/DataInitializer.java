@@ -192,11 +192,11 @@ public class DataInitializer implements CommandLineRunner {
     private void createDiagnosis(){
         if (diagnosisRepository.count() == 0) {
             diagnosisRepository.saveAll(List.of(
-                    Diagnosis.builder().name("No diagnosis yet").build(),
-                    Diagnosis.builder().name("Speech delay (ZRR)").build(),
-                    Diagnosis.builder().name("Developmental delay (ZPR)").build(),
-                    Diagnosis.builder().name("Autism Spectrum (ASD)").build(),
-                    Diagnosis.builder().name("Other").build()
+                    Diagnosis.builder().name("Диагноз не установлен").build(),
+                    Diagnosis.builder().name("Задержка речевого развития (ЗРР)").build(),
+                    Diagnosis.builder().name("Задержка психического развития (ЗПР)").build(),
+                    Diagnosis.builder().name("Расстройство аутистического спектра (РАС)").build(),
+                    Diagnosis.builder().name("Другое").build()
             ));
         }
     }
