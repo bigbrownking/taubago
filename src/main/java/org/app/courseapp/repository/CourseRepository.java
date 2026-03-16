@@ -12,6 +12,7 @@ import java.util.Optional;
 public interface CourseRepository extends JpaRepository<Course, Long> {
     Optional<Course> findByCourseOrder(int order);
     List<Course> findAllByOrderByCourseOrderAsc();
+    boolean existsByTitle(String title);
 
     @Query("SELECT COALESCE(MAX(c.courseOrder), 0) + 1 FROM Course c")
     int findNextCourseOrder();

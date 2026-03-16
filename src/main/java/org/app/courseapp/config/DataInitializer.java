@@ -2,10 +2,17 @@ package org.app.courseapp.config;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.app.courseapp.dto.request.CreateCourseRequest;
 import org.app.courseapp.model.*;
 import org.app.courseapp.model.users.*;
 import org.app.courseapp.repository.*;
+import org.app.courseapp.security.UserDetailsImpl;
+import org.app.courseapp.service.CourseService;
+import org.app.courseapp.service.VideoService;
+import org.app.courseapp.service.impl.MinioService;
 import org.springframework.boot.CommandLineRunner;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Component;
 
@@ -24,6 +31,8 @@ public class DataInitializer implements CommandLineRunner {
     private final DiagnosisRepository diagnosisRepository;
     private final RegistrationQuestionRepository registrationQuestionRepository;
     private final UserRepository userRepository;
+    private final CourseService courseService;
+    private final CourseRepository courseRepository;
     private final PasswordEncoder passwordEncoder;
 
     @Override
@@ -48,6 +57,7 @@ public class DataInitializer implements CommandLineRunner {
         createVideoCategories();
         createDiagnosis();
         createSpecializations();
+        createDefaultCourse();
 
         log.info("✅ Data initialization completed");
     }
@@ -209,6 +219,35 @@ public class DataInitializer implements CommandLineRunner {
                     Specialization.builder().name("Сенсорика").build(),
                     Specialization.builder().name("Арт-терапия").build()
             ));
+        }
+    }
+    private void createDefaultCourse() {
+        if (courseRepository.existsByTitle("Вводный курс")) {
+            log.debug("ℹ️  Default course already exists");
+            return;
+        }
+
+        User admin = userRepository.findByEmail("admin1@gmail.com")
+                .orElseThrow(() -> new RuntimeException("Admin not found"));
+
+        UserDetailsImpl userDetails = UserDetailsImpl.build(admin);
+
+        UsernamePasswordAuthenticationToken auth = new UsernamePasswordAuthenticationToken(
+                userDetails, null, userDetails.getAuthorities()
+        );
+        SecurityContextHolder.getContext().setAuthentication(auth);
+
+        try {
+            CreateCourseRequest request = CreateCourseRequest.builder()
+                    .title("Вводный курс")
+                    .keywords(List.of("Моторика", "Речь"))
+                    .description("Вводный курс для детей")
+                    .durationDays(3)
+                    .build();
+            courseService.createCourse(request);
+            log.info("✅ Default course created");
+        } finally {
+            SecurityContextHolder.clearContext();
         }
     }
 }
